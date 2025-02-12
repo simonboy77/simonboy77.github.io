@@ -2,57 +2,53 @@
 <html>
 <head>
 <style>
-.graphDiv {
-  background-color: red;
-  position:absolute;
-  height: 50%;
-  width: 70%;
-  top: 0px;
-  left: 0px;
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+.container {
+  display: grid;
+  
+  grid-template-areas:
+    "graph damageMods"
+    "weapons weaponMods";
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 5px;
+  background-color: #2196F3;
+  padding: 5px;
+  height: 100vh;
+}
+.container > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  overflow: auto;
+}
+.container > div.graph {
+  grid-area: graph;
   text-align: center;
 }
-.modDiv {
-  background-color: blue;
-  position:absolute;
-  height: 50%;
-  width: 30%;
-  top: 0px;
-  right: 0px;
+.container > div.damageMods {
+  grid-area: damageMods;
+  text-align: center;
 }
-.weaponsDiv {
-  background-color: green;
-  position:absolute;
-  height: 50%;
-  width: 70%;
-  bottom: 0px;
-  left: 0px;
+.container > div.weapons {
+  grid-area: weapons;
 }
-.weaponModsDiv {
-  background-color: pink;
-  position:absolute;
-  height: 50%;
-  width: 30%;
-  bottom: 0px;
-  right: 0px;
+.container > div.weaponMods {
+  grid-area: weaponMods;
 }
 </style>
 </head>
+
 <body>
 
-<div class="graphDiv">
-    graph
-</div>
-
-<div class="modDiv">
-	mods
-</div>
-
-<div class="weaponsDiv">
-	weapons
-</div>
-
-<div class="weaponModsDiv">
-	weapon mods
+<div class="container">
+  <div class="graph"><h2>Graph</h2></div>
+  <div class="damageMods"><p>Damage mods</p></div>
+  <div class="weapons"><p>Weapons</p></div>
+  <div class="weaponMods"><p>Weapons Mods</p></div>
 </div>
 
 </body>
