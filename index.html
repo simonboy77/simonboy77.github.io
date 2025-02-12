@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <head>
 <style>
 * {
@@ -9,7 +10,7 @@
 }
 .container {
   display: grid;
-  
+
   grid-template-areas:
     "graph damageMods"
     "weapons weaponMods";
@@ -45,11 +46,19 @@
 <body>
 
 <div class="container">
-  <div class="graph"><h2>Graph</h2></div>
+  <div class="graph">
+    <canvas id="myChart" style="width:100%;height:100%"></canvas>
+  </div>
   <div class="damageMods"><p>Damage mods</p></div>
   <div class="weapons"><p>Weapons</p></div>
-  <div class="weaponMods"><p>Weapons Mods</p></div>
+  
+  <div class="weaponMods"><p>Weapons Mods</p>
+    <p>Mag tiers:</p>
+    <input type="range" min="1" max="4" value="4" id="magTierCount">
+  </div>
 </div>
+
+<script src="src/test.js"></script>
 
 </body>
 </html>
