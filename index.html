@@ -1,63 +1,121 @@
 <!DOCTYPE html>
 <html>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
 <head>
 <style>
+@font-face {
+	font-family: apex-black;
+	src: url('res/Apex_Black.ttf');
+}
 * {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
 }
 .container {
-  display: grid;
+	display: grid;
 
-  grid-template-areas:
-    "graph damageMods"
-    "weapons weaponMods";
-  grid-template-columns: 2fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 5px;
-  background-color: #2196F3;
-  padding: 5px;
-  height: 100vh;
+	grid-template-areas:
+		"graph damageMods"
+		"weapons weaponMods";
+	grid-template-columns: 2fr 1fr;
+	grid-template-rows: 1fr 1fr;
+	gap: 5px;
+	background-color: #BD313A;
+	padding: 5px;
+	height: 100vh;
 }
 .container > div {
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: 10px;
-  overflow: auto;
+	background-color: rgba(255, 255, 255, 0.8);
+	padding: 10px;
+	overflow: auto;
 }
 .container > div.graph {
-  grid-area: graph;
-  text-align: center;
+	grid-area: graph;
+	text-align: center;
 }
 .container > div.damageMods {
-  grid-area: damageMods;
-  text-align: center;
+	grid-area: damageMods;
 }
 .container > div.weapons {
-  grid-area: weapons;
+	grid-area: weapons;
 }
 .container > div.weaponMods {
-  grid-area: weaponMods;
+	grid-area: weaponMods;
+}
+.prevent-select {
+	-webkit-user-select: none; /* Safari */
+	-ms-user-select: none; /* IE 10 and IE 11 */
+	user-select: none; /* Standard syntax */
+}
+h2 {
+	text-align: center;
+	font-family: apex-black;
 }
 </style>
 </head>
 
-<body>
+<body onload="setup_page()">
 
 <div class="container">
-  <div class="graph">
-    <canvas id="myChart" style="width:100%;height:100%"></canvas>
-  </div>
-  <div class="damageMods"><p>Damage Mods</p></div>
-  <div class="weapons"><p>Weapons</p></div>
-  
-  <div class="weaponMods"><p>Weapons Mods</p>
-    <p>Mag tiers:</p>
-    <input type="range" min="1" max="4" value="4" id="magTierCount">
-  </div>
+	<div class="graph">
+		<canvas id="myChart" style="width:100%;height:100%"></canvas>
+	</div>
+	<div class="damageMods">
+		<h2 style="text-align:center">Damage Mods</h2><br>
+		
+		<p class="prevent-select">Target armour:</p>
+		<select name="input_armour" id="input_armour">
+			<option value="none">None</option>
+			<option value="common">Common</option>
+			<option value="rare">Rare</option>
+			<option value="epic">Epic/Legendary</option>
+			<option value="mythic">Mythic</option>
+		</select><br>
+		
+		<p class="prevent-select">Accuracy:</p>
+		<input type="range" min="10" max="100" step="1" value="100" name="input_accuracy" id="input_accuracy">
+		<output name="accuracyText" id="accuracyText"></output><br>
+		
+		<p class="prevent-select">Headshot rate:</p>
+		<input type="range" min="0" max="100" step="1" value="0" name="input_headshot" id="input_headshot">
+		<output name="headshotText" id="headshotText"></output><br>
+		
+		<p class="prevent-select">Legshot rate:</p>
+		<input type="range" min="0" max="100" step="1" value="0" name="input_legshot" id="input_legshot">
+		<output name="legshotText" id="legshotText"></output><br>
+		
+		<br>
+		
+		<input type="checkbox" name="input_fortified" id="input_fortified">
+		<label for="input_fortified" class="prevent-select">Fortified</label><br>
+		
+		<input type="checkbox" name="input_amped" id="input_amped">
+		<label for="input_amped" class="prevent-select">Amped</label><br>
+		
+		<input type="checkbox" name="input_marked" id="input_marked">
+		<label for="input_marked" class="prevent-select">Vantage Mark</label><br>
+	</div>
+
+	<div class="weapons">
+		<h2>Weapons</h2>
+	</div>
+
+	<div class="weaponMods">
+		<h2>Weapon Mods</h2><br>
+		
+		<p class="prevent-select">Magazine:</p>
+		<select name="input_mag" id="input_mag">
+			<option value="none">None</option>
+			<option value="common">Common</option>
+			<option value="rare">Rare</option>
+			<option value="epic">Epic/Legendary</option>
+			<option value="mythic">Mythic</option>
+		</select><br>
+	</div>
 </div>
 
+<script src="src/types.js"></script>
 <script src="src/test.js"></script>
 
 </body>

@@ -7,6 +7,7 @@ const Rarity = {
 	MYTHIC:    5
 };
 
+/*
 class Modifiers {
 	constructor(amped, marked, fortified, tacReload, accuracy, headshotRate, legRate) {
 		
@@ -17,4 +18,4 @@ class WeaponMods {
 	constructor(mag, stock, bolt, disruptor, hammerpoint) {
 		
 	}
-}
+}*/
