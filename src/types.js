@@ -7,6 +7,26 @@ const Rarity = {
 	MYTHIC:    5
 };
 
+class Modifiers {
+	constructor(amp, mk, ff, tac, ac, hr, lr) {
+		this.amped = amp;
+		this.marked = mk;
+		this.fortified = ff;
+		this.tacReload = tac;
+		this.accuracy = ac;
+		this.headshotRate = hr;
+		this.legshotRate = lr;
+	}
+}
+
+class WeaponModifiers {
+	constructor(mag, stock, bolt) {
+		this.magRarity = mag;
+		this.stockRarity = stock;
+		this.shotgunBoltRarity = bolt;
+	}
+}
+
 /*
 class Modifiers {
 	constructor(amped, marked, fortified, tacReload, accuracy, headshotRate, legRate) {

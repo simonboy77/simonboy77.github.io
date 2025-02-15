@@ -11,6 +11,11 @@
 	box-sizing: border-box;
 	padding: 0;
 	margin: 0;
+	
+	/* Prevent text selection */
+	-webkit-user-select: none; /* Safari */
+	-ms-user-select: none; /* IE 10 and IE 11 */
+	user-select: none; /* Standard syntax */
 }
 .container {
 	display: grid;
@@ -43,11 +48,6 @@
 .container > div.weaponMods {
 	grid-area: weaponMods;
 }
-.prevent-select {
-	-webkit-user-select: none; /* Safari */
-	-ms-user-select: none; /* IE 10 and IE 11 */
-	user-select: none; /* Standard syntax */
-}
 h2 {
 	text-align: center;
 	font-family: apex-black;
@@ -62,9 +62,9 @@ h2 {
 		<canvas id="myChart" style="width:100%;height:100%"></canvas>
 	</div>
 	<div class="damageMods">
-		<h2 style="text-align:center">Damage Mods</h2><br>
+		<h2>Damage Mods</h2><br>
 		
-		<p class="prevent-select">Target armour:</p>
+		<p>Target armour:</p>
 		<select name="input_armour" id="input_armour">
 			<option value="none">None</option>
 			<option value="common">Common</option>
@@ -73,7 +73,7 @@ h2 {
 			<option value="mythic">Mythic</option>
 		</select><br>
 		
-		<p class="prevent-select">Accuracy:</p>
+		<p>Accuracy:</p>
 		<input type="range" min="10" max="100" step="1" value="100" name="input_accuracy" id="input_accuracy">
 		<output name="accuracyText" id="accuracyText"></output><br>
 		
@@ -81,20 +81,23 @@ h2 {
 		<input type="range" min="0" max="100" step="1" value="0" name="input_headshot" id="input_headshot">
 		<output name="headshotText" id="headshotText"></output><br>
 		
-		<p class="prevent-select">Legshot rate:</p>
+		<p>Legshot rate:</p>
 		<input type="range" min="0" max="100" step="1" value="0" name="input_legshot" id="input_legshot">
 		<output name="legshotText" id="legshotText"></output><br>
 		
 		<br>
 		
+		<input type="checkbox" id="input_tacReload">
+		<label for="input_tacReload">Tactical Reload</label><br>
+		
 		<input type="checkbox" name="input_fortified" id="input_fortified">
-		<label for="input_fortified" class="prevent-select">Fortified</label><br>
+		<label for="input_fortified">Fortified</label><br>
 		
 		<input type="checkbox" name="input_amped" id="input_amped">
-		<label for="input_amped" class="prevent-select">Amped</label><br>
+		<label for="input_amped">Amped</label><br>
 		
 		<input type="checkbox" name="input_marked" id="input_marked">
-		<label for="input_marked" class="prevent-select">Vantage Mark</label><br>
+		<label for="input_marked">Vantage Mark</label><br>
 	</div>
 
 	<div class="weapons">
@@ -104,18 +107,34 @@ h2 {
 	<div class="weaponMods">
 		<h2>Weapon Mods</h2><br>
 		
-		<p class="prevent-select">Magazine:</p>
+		<p>Magazine:</p>
 		<select name="input_mag" id="input_mag">
 			<option value="none">None</option>
 			<option value="common">Common</option>
 			<option value="rare">Rare</option>
 			<option value="epic">Epic/Legendary</option>
-			<option value="mythic">Mythic</option>
+		</select><br>
+		
+		<p>Stock:</p>
+		<select name="input_stock" id="input_stock">
+			<option value="none">None</option>
+			<option value="common">Common</option>
+			<option value="rare">Rare</option>
+			<option value="epic">Epic/Legendary</option>
+		</select><br>
+		
+		<p>Shotgun Bolt:</p>
+		<select name="input_bolt" id="input_bolt">
+			<option value="none">None</option>
+			<option value="common">Common</option>
+			<option value="rare">Rare</option>
+			<option value="epic">Epic/Legendary</option>
 		</select><br>
 	</div>
 </div>
 
 <script src="src/types.js"></script>
+<script src="src/weapon.js"></script>
 <script src="src/test.js"></script>
 
 </body>

@@ -12,54 +12,67 @@ const barColors = ["gray", "white","blue","purple"];
 const myData = {
   labels: ['test', 'test', 'test', 'test', 'test', 'test', 'test'],
   datasets: [{
-    label: 'Gun 1',
-    data: [	{x:100,y:1.3},
-    		{x:90,y:2.2},
-    		{x:75,y:3},
-    		{x:60,y:4.9},
-    		{x:30,y:6.0},
-    		{x:10,y:6.1}
-    ],
+    label: 'Flatline None',
+    data: flatline.fire_for_time(10.0, Rarity.NONE),
     fill: false,
-    borderColor: 'rgb(75, 192, 192)',
-    tension: 0.1
+    borderColor: 'rgb(75, 192, 192)'
   }, {
-  	label: 'Gun 2',
-    data: [	{x:100,y:1.5},
-    		{x:90,y:2.1},
-    		{x:30,y:5.6},
-    		{x:10,y:6.9}
-    ],
+  	label: 'Flatline Epic',
+    data: flatline.fire_for_time(10.0, Rarity.EPIC),
     fill: false,
-    borderColor: 'rgb(12, 102, 192)',
-    tension: 0.1
+    borderColor: 'rgb(12, 102, 192)'
+  }, {
+  	label: 'Common Armour',
+  	data: [{x:0,y:150},{x:10,y:150}],
+  	borderColor: 'rgb(12, 102, 192)',
+  	borderDash: [5, 5]
   }]
 };
 
-var chart = new Chart('myChart', {
+console.log(myData.datasets[0].data);
+
+let chart = new Chart('myChart', {
 	type: 'line',
 	data: myData,
 	
 	options: {
 		scales: {
 			x: {
-				min: 10,
-				max: 100,
-				type: 'linear',
-				reverse: true
+				min: 0,
+				max: 10,
+				type: 'linear'
 			},
 			y: {
 				min: 0,
-				max: 10
+				max: 2000
 			}
 		},
 		plugins: {
 			title: {
 				display: true,
-				text: 'TTK Per Accuracy'
+				text: 'Damage over time'
 				},
 			legend: {
 				display: false
+			},
+			tooltip: {
+				enabled: false
+			},
+			annotation: {
+				annotations: {
+					common: {
+						type: 'line',
+						yMin: 150,
+						yMax: 150,
+						borderColor: 'rgb(0, 99, 132)',
+						borderWidth: 20
+					}
+				}
+			}
+		},
+		elements: {
+			point: {
+				pointStyle: false
 			}
 		}
 	}
@@ -101,14 +114,14 @@ slider.oninput = function() {
 }*/
 
 // Damage mods
-var armour = document.getElementById
-var accuracySlider = document.getElementById("input_accuracy");
-var headshotSlider = document.getElementById("input_headshot");
-var legshotSlider = document.getElementById("input_legshot");
+let armourSelect = document.getElementById
+let accuracySlider = document.getElementById("input_accuracy");
+let headshotSlider = document.getElementById("input_headshot");
+let legshotSlider = document.getElementById("input_legshot"); 
 
-var accuracyText = document.getElementById("accuracyText");
-var headshotText = document.getElementById("headshotText");
-var legshotText = document.getElementById("legshotText");
+let accuracyText = document.getElementById("accuracyText");
+let headshotText = document.getElementById("headshotText");
+let legshotText = document.getElementById("legshotText");
 
 function update_slider_text(slider, text)
 {
