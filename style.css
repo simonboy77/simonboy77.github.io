@@ -1,0 +1,110 @@
+@font-face {
+	font-family: apex-black;
+	src: url('res/Apex_Black.ttf');
+}
+
+* {
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+
+	/* Prevent text selection */
+	-webkit-user-select: none; /* Safari */
+	-ms-user-select: none; /* IE 10 and IE 11 */
+	user-select: none; /* Standard syntax */
+}
+
+.screenGrid {
+	display: grid;
+
+	grid-template-areas:
+		'graph damageMods'
+		'weapons weaponMods';
+	grid-template-columns: 2fr 1fr;
+	grid-template-rows: 1fr 1fr;
+	background-color: #0D313A;
+	padding: 8px;
+	gap: 4px;
+	height: 100vh;
+}
+
+.screenGrid > div {
+	background-color: rgba(255, 255, 255, 0.8);
+	padding: 10px;
+	overflow: auto;
+}
+
+.screenGrid > div.graph {
+	grid-area: graph;
+	text-align: center;
+}
+
+.screenGrid > div.damageMods {
+	grid-area: damageMods;
+}
+
+.screenGrid > div.weapons {
+	grid-area: weapons;
+}
+
+.screenGrid > div.weaponMods {
+	grid-area: weaponMods;
+}
+
+.weaponGrid {
+	display: grid;
+	
+	grid-template-areas:
+		'activeWeapons'
+		'weaponSelect';
+	grid-template-rows: 2fr 1fr;
+	padding: 4px;
+	gap: 4px;
+	height: 100%;
+}
+
+.weaponGrid > div {
+	padding: 10px;
+	overflow: auto;
+}
+
+.weaponGrid > div.activeWeapons {
+	grid-area: activeWeapons;
+	border: 2px solid #0D313A;
+}
+
+.weaponGrid > div.weaponSelect {
+	grid-area: weaponSelect;
+	border: 2px solid #0D313A;
+}
+
+.weaponBtn {
+	width: 80px;
+	height: 30px;
+	position: relative;
+	/* WHERE THE HELL DOES THAT LIL' BIT OF TOP PADDING COME FROM??!! */
+}
+
+/* to convert hex color to css filter: https://codepen.io/sosuke/pen/Pjoqqp */
+.weaponImg {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 0;
+  	left: 0;
+  	filter: invert(87%) sepia(0%) saturate(63%) hue-rotate(226deg) brightness(89%) contrast(91%);
+}
+
+.weaponTxt {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	white-space: nowrap;
+}
+
+h2 {
+	text-align: center;
+	font-family: apex-black;
+}
+

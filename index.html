@@ -2,140 +2,101 @@
 <html>
 <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
 <head>
-<style>
-@font-face {
-	font-family: apex-black;
-	src: url('res/Apex_Black.ttf');
-}
-* {
-	box-sizing: border-box;
-	padding: 0;
-	margin: 0;
-	
-	/* Prevent text selection */
-	-webkit-user-select: none; /* Safari */
-	-ms-user-select: none; /* IE 10 and IE 11 */
-	user-select: none; /* Standard syntax */
-}
-.container {
-	display: grid;
-
-	grid-template-areas:
-		"graph damageMods"
-		"weapons weaponMods";
-	grid-template-columns: 2fr 1fr;
-	grid-template-rows: 1fr 1fr;
-	gap: 5px;
-	background-color: #BD313A;
-	padding: 5px;
-	height: 100vh;
-}
-.container > div {
-	background-color: rgba(255, 255, 255, 0.8);
-	padding: 10px;
-	overflow: auto;
-}
-.container > div.graph {
-	grid-area: graph;
-	text-align: center;
-}
-.container > div.damageMods {
-	grid-area: damageMods;
-}
-.container > div.weapons {
-	grid-area: weapons;
-}
-.container > div.weaponMods {
-	grid-area: weaponMods;
-}
-h2 {
-	text-align: center;
-	font-family: apex-black;
-}
-</style>
+<link rel='stylesheet' href='style.css'>
 </head>
 
-<body onload="setup_page()">
+<body onload='setup_page()'>
 
-<div class="container">
-	<div class="graph">
-		<canvas id="myChart" style="width:100%;height:100%"></canvas>
+<div class='screenGrid'>
+	<div class='graph'>
+		<canvas id='statChart'></canvas>
 	</div>
-	<div class="damageMods">
+	<div class='damageMods'>
 		<h2>Damage Mods</h2><br>
-		
-		<p>Target armour:</p>
-		<select name="input_armour" id="input_armour">
-			<option value="none">None</option>
-			<option value="common">Common</option>
-			<option value="rare">Rare</option>
-			<option value="epic">Epic/Legendary</option>
-			<option value="mythic">Mythic</option>
+
+		<p>Target Shield:</p>
+		<select id='input_shield'>
+			<option value='0'>None</option>
+			<option value='1'>Common</option>
+			<option value='2'>Rare</option>
+			<option value='3'>Epic</option>
+			<option value='4'>Legendary</option>
+			<option value='5'>Mythic</option>
 		</select><br>
-		
+
 		<p>Accuracy:</p>
-		<input type="range" min="10" max="100" step="1" value="100" name="input_accuracy" id="input_accuracy">
-		<output name="accuracyText" id="accuracyText"></output><br>
-		
-		<p class="prevent-select">Headshot rate:</p>
-		<input type="range" min="0" max="100" step="1" value="0" name="input_headshot" id="input_headshot">
-		<output name="headshotText" id="headshotText"></output><br>
-		
-		<p>Legshot rate:</p>
-		<input type="range" min="0" max="100" step="1" value="0" name="input_legshot" id="input_legshot">
-		<output name="legshotText" id="legshotText"></output><br>
-		
+		<input type='range' min='10' max='100' step='1' value='100' id='input_accuracy'>
+		<output id='accuracyText'></output><br>
+
+		<p>Headshot Rate:</p>
+		<input type='range' min='0' max='100' step='1' value='0' id='input_headshot'>
+		<output id='headshotText'></output><br>
+
+		<p>Legshot Rate:</p>
+		<input type='range' min='0' max='100' step='1' value='0' id='input_legshot'>
+		<output id='legshotText'></output><br>
+
 		<br>
-		
-		<input type="checkbox" id="input_tacReload">
-		<label for="input_tacReload">Tactical Reload</label><br>
-		
-		<input type="checkbox" name="input_fortified" id="input_fortified">
-		<label for="input_fortified">Fortified</label><br>
-		
-		<input type="checkbox" name="input_amped" id="input_amped">
-		<label for="input_amped">Amped</label><br>
-		
-		<input type="checkbox" name="input_marked" id="input_marked">
-		<label for="input_marked">Vantage Mark</label><br>
+
+		<input type='checkbox' id='input_fortified'>
+		<label for='input_fortified'>Fortified</label><br>
+
+		<input type='checkbox' id='input_amped'>
+		<label for='input_amped'>Amped</label><br>
+
+		<input type='checkbox' id='input_marked'>
+		<label for='input_marked'>Vantage Mark</label><br>
 	</div>
 
-	<div class="weapons">
-		<h2>Weapons</h2>
+	<div class='weapons'>
+		<div class='weaponGrid'>
+			<div class='activeWeapons' id='activeWeapons'>
+			</div>
+			
+			<div class='weaponSelect' id='weaponSelect'>
+			</div>
+		</div>
 	</div>
 
-	<div class="weaponMods">
+	<div class='weaponMods'>
 		<h2>Weapon Mods</h2><br>
-		
+
 		<p>Magazine:</p>
-		<select name="input_mag" id="input_mag">
-			<option value="none">None</option>
-			<option value="common">Common</option>
-			<option value="rare">Rare</option>
-			<option value="epic">Epic/Legendary</option>
+		<select id='input_mag'>
+			<option value='0'>None</option>
+			<option value='1'>Common</option>
+			<option value='2'>Rare</option>
+			<option value='3'>Epic</option>
 		</select><br>
-		
+
 		<p>Stock:</p>
-		<select name="input_stock" id="input_stock">
-			<option value="none">None</option>
-			<option value="common">Common</option>
-			<option value="rare">Rare</option>
-			<option value="epic">Epic/Legendary</option>
+		<select id='input_stock'>
+			<option value='0'>None</option>
+			<option value='1'>Common</option>
+			<option value='2'>Rare</option>
+			<option value='3'>Epic</option>
 		</select><br>
-		
+
 		<p>Shotgun Bolt:</p>
-		<select name="input_bolt" id="input_bolt">
-			<option value="none">None</option>
-			<option value="common">Common</option>
-			<option value="rare">Rare</option>
-			<option value="epic">Epic/Legendary</option>
+		<select id='input_bolt'>
+			<option value='0'>None</option>
+			<option value='1'>Common</option>
+			<option value='2'>Rare</option>
+			<option value='3'>Epic</option>
 		</select><br>
+
+		<input type='checkbox' id='input_tacReload'>
+		<label for='input_tacReload'>Tactical Reload</label><br>
+
+		<input type='checkbox' id='input_splatterRounds'>
+		<label for='input_splatterRounds'>Splatter Rounds</label><br>
 	</div>
 </div>
 
-<script src="src/types.js"></script>
-<script src="src/weapon.js"></script>
-<script src="src/test.js"></script>
+<script src='src/types.js'></script>
+<script src='src/weapon.js'></script>
+<script src='src/charting.js'></script>
+<script src='src/page_handling.js'></script>
 
 </body>
 </html>

@@ -114,18 +114,29 @@ slider.oninput = function() {
 }*/
 
 // Damage mods
-let armourSelect = document.getElementById
-let accuracySlider = document.getElementById("input_accuracy");
-let headshotSlider = document.getElementById("input_headshot");
-let legshotSlider = document.getElementById("input_legshot"); 
+let shieldSelect      = document.getElementById('input_shield');
+let accuracySlider    = document.getElementById('input_accuracy');
+let headshotSlider    = document.getElementById('input_headshot');
+let legshotSlider     = document.getElementById('input_legshot'); 
+let fortifiedCheckbox = document.getElementById('input_fortified');
+let ampedCheckbox     = document.getElementById('input_amped');
+let markedCheckbox    = document.getElementById('input_marked');
 
-let accuracyText = document.getElementById("accuracyText");
-let headshotText = document.getElementById("headshotText");
-let legshotText = document.getElementById("legshotText");
+// Weapon mods
+let magSelect              = document.getElementById('input_mag');
+let stockSelect            = document.getElementById('input_stock');
+let boltSelect             = document.getElementById('input_bolt');
+let tacReloadCheckbox      = document.getElementById('input_tacReload');
+let splatterRoundsCheckbox = document.getElementById('input_splatterRounds');
+
+// Misc
+let accuracyText = document.getElementById('accuracyText');
+let headshotText = document.getElementById('headshotText');
+let legshotText  = document.getElementById('legshotText');
 
 function update_slider_text(slider, text)
 {
-	text.value = slider.value + "%";
+	text.value = slider.value + '%';
 }
 
 function setup_page()

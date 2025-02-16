@@ -1,26 +1,22 @@
 class Weapon {
-	constructor(bd, hm, lm, rps, mNone, mCommon, mRare, mEpic, rf, rt) {
-		this.bodyDamage = bd; // float
-		this.headshotMultiplier = hm; // float
-		this.legshotMultiplier = lm; // float
+	constructor(name, bd, hm, lm, rps, mNone, mCommon, mRare, mEpic, rf, rt) {
+		this.name = name;
+		this.bodyDamage = bd; this.headshotMultiplier = hm; this.legshotMultiplier = lm;
 		
-		this.roundsPerSecond = rps; // float
+		this.roundsPerSecond = rps;
 		this.roundsPerMinute = this.roundsPerSecond * 60.0;
 		this.secondsPerRound = 1.0 / this.roundsPerSecond;
 		
-		this.magSizeNone   = mNone;
-		this.magSizeCommon = mCommon;
-		this.magSizeRare   = mRare;
-		this.magSizeEpic   = mEpic;
+		this.magSizeNone = mNone; this.magSizeCommon = mCommon;
+		this.magSizeRare = mRare; this.magSizeEpic = mEpic;
 		
-		this.reloadTimeFull = rf;
-		this.reloadTimeTac   = rt;
+		this.reloadTimeFull = rf; this.reloadTimeTac   = rt;
 	}
 	
-	get_mag_size(magRarity) {
+	get_mag_size(weaponMods) {
 		let magSize = this.magSizeNone;
 		
-		switch(magRarity) {
+		switch(weaponMods.magRarity) {
 			case Rarity.COMMON: { magSize = this.magSizeCommon; } break;
 			case Rarity.RARE:   { magSize = this.magSizeRare; } break;
 			case Rarity.EPIC:
@@ -28,24 +24,86 @@ class Weapon {
 			case Rarity.MYTHIC: { magSize = this.magSizeEpic; } break;
 		}
 		
+		if(weaponMods.tacReload) { magSize -= 1; }
 		return magSize;
 	}
 	
-	get_headshot_damage() {
-		return (this.bodyDamage * this.headshotMultiplier);
+	get_reload_time(weaponMods) {
+		let reloadTime = (weaponMods.tacReload) ? this.reloadTimeTac : this.reloadTimeFull;
+		
+		switch(weaponMods.stockRarity) {
+			case Rarity.COMMON:  { reloadTime *= 0.967; } break; // -3.3%
+			case Rarity.RARE:    { reloadTime *= 0.933; } break; // -6.7%
+			case Rarity.EPIC:
+			case Rarity.LEGENDARY: { reloadTime *= 0.9; } break; // -10%
+			
+			default: break;
+		}
+		
+		if(weaponMods.ampReload) { reloadTime *= 0.6; } // -40%
+		if(weaponMods.splatterRounds) { reloadTime *= 0.75; } // -25%
+		return reloadTime;
 	}
 	
-	get_legshot_damage(shotCount) {
-		return (this.bodyDamage * this.legshotMultiplier) * shotCount;
+	get_body_damage(damageMods, doRounding = true) {
+		let damage = this.bodyDamage;
+		
+		if(damageMods.amped) { damage *= 1.2; }
+		if(damageMods.marked) { damage *= 1.15; }
+		if(damageMods.fortified) { damage *= 0.85; }
+		if(doRounding) { damage = Math.round(damage); }
+		
+		return damage;
 	}
 	
-	fire_for_time(seconds, magRarity) {
+	get_headshot_damage(damageMods, doRounding = true) {
+		let damage = this.get_body_damage(damageMods, false) * this.headshotMultiplier;
+		if(doRounding) { damage = Math.round(damage); }
+		
+		return damage;
+	}
+	
+	get_legshot_damage(damageMods, doRounding = true) {
+		let damage = this.get_body_damage(damageMods, false) * this.legshotMultiplier;
+		if(doRounding) { damage = Math.round(damage); }
+		
+		return damage;
+	}
+	
+	get_average_damage(damageMods, doRounding = true) {
+		let averageDamage = 0.0;
+		let bodyshotRate = 1.0;
+		
+		if(damageMods.headshotRate > 0.0) {
+			let headshotDamage = this.get_headshot_damage(damageMods);
+			averageDamage += headshotDamage * damageMods.headshotRate;
+			bodyshotRate -= damageMods.headshotRate;
+		}
+		
+		if(damageMods.legshotRate > 0.0) {
+			let legshotDamage = this.get_legshot_damage(damageMods);
+			averageDamage += legshotDamage * damageMods.legshotRate;
+			bodyshotRate -= damageMods.legshotRate;
+		}
+		
+		averageDamage += this.get_body_damage(damageMods) * bodyshotRate;
+		averageDamage *= damageMods.accuracy;
+		if(doRounding) { averageDamage = Math.round(averageDamage); }
+		
+		return averageDamage;
+	}
+	
+	fire_for_time(seconds, damageMods, weaponMods) {
 		const data = [];
 		
-		let totalMagSize = this.get_mag_size(magRarity);
+		let totalMagSize = this.get_mag_size(weaponMods);
 		if(totalMagSize <= 0 || seconds <= 0.0) {
+			console.warn('invalid magSize (', totalMagSize, ') or seconds (', seconds, ')');
 			return data;
 		}
+		
+		let averageDamage = this.get_average_damage(damageMods);
+		let reloadTime = this.get_reload_time(weaponMods);
 		
 		let totalDamage = 0.0;
 		let secondsPassed = 0.0;
@@ -53,7 +111,7 @@ class Weapon {
 		
 		while (secondsPassed < seconds) {
 			curMag -= 1;
-			totalDamage += this.bodyDamage;
+			totalDamage += averageDamage;
 			data.push({x:secondsPassed,y:totalDamage});
 			
 			if(curMag > 0) {
@@ -61,7 +119,9 @@ class Weapon {
 			}
 			else {
 				curMag = totalMagSize;
-				secondsPassed += this.reloadTimeFull;
+				secondsPassed += reloadTime;
+				
+				if(secondsPassed > seconds) { secondsPassed = seconds; }
 				data.push({x:secondsPassed,y:totalDamage}); // necessary?
 			}
 		}
@@ -78,45 +138,37 @@ class Shotgun extends Weapon {
 	}
 }
 
-const flatline = new Weapon(19.0, 1.3, 0.75, 10.0, 19, 23, 27, 29, 3.1, 2.4);
-const eva = new Shotgun(8, 7.0, 1.25, 1.0);
-
-console.log('flatline damage: ', flatline.bodyDamage);
-console.log('eva damage: ', eva.bodyDamage);
-
-console.log('test ');
-
-/*
-// Using a constructor
-function person(first_name, last_name) {
-    this.first_name = first_name;
-    this.last_name = last_name;
+class ModdedWeapon {
+	constructor(weapon, weaponMods) {
+		this.weapon = weapon;
+		this.weaponsMods = weaponMods;
+		
+		let letters = '0123456789ABCDEF';
+		this.color = '#';
+		for (let charIndex = 0; charIndex < 6; ++charIndex) {
+			this.color += letters[Math.floor(Math.random() * 16)];
+		}
+	}
+	
+	get_name() {
+		return this.weapon.name;
+	}
+	
+	fire_for_time(seconds, damageMods) {
+		return this.weapon.fire_for_time(seconds, damageMods, weaponMods);
+	}
 }
-// Creating new instances of person object
-let person1 = new person('Mukul', 'Latiyan');
-let person2 = new person('Rahul', 'Avasthi');
 
-console.log(person1.first_name);
-console.log(${person2.first_name} ${person2.last_name});
+const weapons_S24 = [
+	// Havoc
+	new Weapon('Flatline', 19.0, 1.3, 0.75, 10.0, 19, 23, 27, 29, 3.1, 2.4),
+	// Hemlok
+	new Weapon('R-301', 14.0, 1.3, 0.75, 13.5, 21, 23, 28, 31, 3.2, 2.4),
+	// Nemesis
+	new Weapon('Alternator', 18.0, 1.2, 0.8, 10.0, 19, 23, 26, 28, 2.23, 1.9),
+	// Prowler
+	new Weapon('R-99', 13.0, 1.2, 0.8, 18.0, 17, 20, 23, 26, 2.45, 1.8),
+	new Weapon('Volt', 15.0, 1.25, 0.8, 12.0, 19, 21, 23, 26, 2.03, 1.44),
+	new Weapon('C.A.R.', 14.0, 1.25, 0.8, 15.4, 19, 22, 24, 27, 2.13, 1.7)
+];
 
-
-
-
-
-// Defining object
-let person = {
-    first_name: 'Mukul',
-    last_name: 'Latiyan',
- 
-    //method
-    getFunction: function () {
-        return (The name of the person is 
-          ${person.first_name} ${person.last_name})
-    },
-    //object within object
-    phone_number: {
-        mobile: '12345',
-        landline: '6789'
-    }
-}
-*/
