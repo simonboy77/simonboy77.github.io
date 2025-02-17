@@ -35,6 +35,14 @@ class WeaponModifiers {
 	}
 }
 
+class ChartModifiers {
+	constructor(tp, sec, sh) {
+		this.type = tp;
+		this.seconds = sec;
+		this.showShields = sh;
+	}
+}
+
 /*
 class Modifiers {
 	constructor(amped, marked, fortified, tacReload, accuracy, headshotRate, legRate) {

@@ -1,8 +1,8 @@
 const ChartTypes = {
 	TTK_OVER_ACCURACY: 0,
 	DAMAGE_OVER_TIME:  1,
-	DAMAGE_PER_MAG:    2,
-	DPS_PER_MAG:       3
+	DPS_PER_MAG:       2,
+	DAMAGE_PER_MAG:    3
 };
 
 function get_chart_title(type)
@@ -18,41 +18,32 @@ function get_chart_title(type)
 	return 'Unknown Chart Type';
 }
 
-function legend_filter(legend, chart)
-{
-	
-}
-
-const ttkOverAccOptions = {
+let baseOptions = {
 	scales: {
 		x: {
-			min: 10,
+			min: 0,
+			max: 0,
 			type: 'linear'
 		},
 		y: {
-			min: 0
+			min: 0,
+			max: 0,
 		}
 	},
 	plugins: {
 		title: {
 			display: true,
-			text: 'TTK Over Accuracy'
+			text: 'Base Chart'
 		},
 		legend: {
 			display: true,
 			labels: {
-				// If legendItem has no text we don't display it. Used for dotted shield lines
-				filter: function(legendItem, data) { return legendItem.text; }
+				filter: function(item, data) { return true; }
 			}
 		},
 		tooltip: {
 			enabled: false
 		}
-	},
-	interaction: {
-		intersect: false,
-		axis: 'y',
-		mode: 'nearest'
 	},
 	elements: {
 		line: {
@@ -66,12 +57,20 @@ const ttkOverAccOptions = {
 		duration: 0
 	},
 	maintainAspectRatio: false
-};
+}
 
-const dmgOverTimeOptions = ttkOverAccOptions;
-dmgOverTimeOptions.scales.x.min = 0;
-dmgOverTimeOptions.scales.y.max = 800;
-dmgOverTimeOptions.plugins.title.text = 'Damage Over Time';
+//let ttkOverAccuracyOptions = JSON.parse(JSON.stringify(baseOptions));
+let ttkOverAccuracyOptions = cloneDeep(baseOptions);
+ttkOverAccuracyOptions.scales.x.min = 10;
+ttkOverAccuracyOptions.scales.x.max = 100;
+ttkOverAccuracyOptions.scales.y.max = 10.0;
+ttkOverAccuracyOptions.plugins.title.text = 'TTK Over Accuracy';
+
+let damageOverTimeOptions = cloneDeep(baseOptions);
+damageOverTimeOptions.scales.x.max = 10.0;
+damageOverTimeOptions.scales.y.max = 800;
+damageOverTimeOptions.plugins.title.text = 'Damage Over Time';
+damageOverTimeOptions.plugins.legend.labels.filter = function(item, data) { return item.text; };
 
 const shieldOverlayDataset = [
 	{ // Common Shield
@@ -97,42 +96,79 @@ const shieldOverlayDataset = [
 	}
 ];
 
-function create_chart_damage_over_time(canvasId, seconds, showShields)
-{	
-	let chartDataset = [];
-	if(showShields || true) {
-		for(let shieldIndex = 0; shieldIndex < shieldOverlayDataset.length; ++shieldIndex) {
-			shieldOverlayDataset[shieldIndex].data[1].x = seconds;
-		}
-		
-		chartDataset = shieldOverlayDataset;
-	}
-	
-	let chartOptions = dmgOverTimeOptions;
-	chartOptions.scales.x.max = seconds;
-	
-	let chart = new Chart(canvasId, {
-		type: 'line',
-		data: {
-			datasets: chartDataset
-		},
-		options: chartOptions
-	});
-	
-	return chart;
+function chart_update_ttk_over_accuracy(chart, datasets, graphMods)
+{
+	chart.data.datasets = datasets;
+	chart.update();
 }
 
-function update_chart_damage_over_time(chart, datasets, seconds, showShields)
+function chart_update_damage_over_time(chart, datasets, graphMods)
 {
 	// todo: destroy previous dataset?
 	chart.data.datasets = datasets;
-	if(showShields) {
+	if(graphMods.showShields) {
 		for(let shieldIndex = 0; shieldIndex < shieldOverlayDataset.length; ++shieldIndex) {
-			shieldOverlayDataset[shieldIndex].data[1].x = seconds;
+			shieldOverlayDataset[shieldIndex].data[1].x = graphMods.seconds;
 		}
 		
 		chart.data.datasets = chart.data.datasets.concat(shieldOverlayDataset);
 	}
 	
+	damageOverTimeOptions.scales.x.max = graphMods.seconds
 	chart.update();
+}
+
+function chart_update(chart, datasets, chartMods)
+{
+	switch(chartMods.type)
+	{
+		case ChartTypes.TTK_OVER_ACCURACY: {
+			chart_update_ttk_over_accuracy(chart, datasets, chartMods);
+		} break;
+		
+		case ChartTypes.DAMAGE_OVER_TIME: {
+			chart_update_damage_over_time(chart, datasets, chartMods);
+		} break;
+		
+		case ChartTypes.DPS_PER_MAG: {  } break;
+		case ChartTypes.DAMAGE_PER_MAG: {  } break;
+	}
+}
+
+function chart_set_type(chart, chartMods)
+{
+	switch(chartMods.type) {
+		case ChartTypes.TTK_OVER_ACCURACY: {
+			chart.type = 'line';
+			chart.options = ttkOverAccuracyOptions;
+		} break;
+		
+		case ChartTypes.DAMAGE_OVER_TIME: {
+			chart.type = 'line';
+			chart.options = damageOverTimeOptions;
+		} break;
+		
+		case ChartTypes.DPS_PER_MAG: {
+			
+		} break;
+		
+		case ChartTypes.DAMAGE_PER_MAG: {
+			
+		} break;
+	}
+}
+
+function chart_create(canvasId, graphMods)
+{
+	const chart = new Chart(canvasId, {
+		type: 'line',
+		data: {
+			datasets: []
+		},
+		options: damageOverTimeOptions
+	});
+
+	chart_set_type(chart, graphMods);
+	chart_update(chart, [], graphMods);
+	return chart;
 }

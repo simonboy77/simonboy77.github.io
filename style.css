@@ -18,8 +18,8 @@
 	display: grid;
 
 	grid-template-areas:
-		'graph damageMods'
-		'weapons weaponMods';
+		'graph   mods'
+		'weapons mods';
 	grid-template-columns: 2fr 1fr;
 	grid-template-rows: 1fr 1fr;
 	background-color: #0D313A;
@@ -39,17 +39,17 @@
 	text-align: center;
 }
 
-.screenGrid > div.damageMods {
-	grid-area: damageMods;
+.screenGrid > div.mods {
+	grid-area: mods;
 }
 
 .screenGrid > div.weapons {
 	grid-area: weapons;
 }
-
+/*
 .screenGrid > div.weaponMods {
 	grid-area: weaponMods;
-}
+}*/
 
 .weaponGrid {
 	display: grid;
