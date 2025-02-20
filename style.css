@@ -46,10 +46,6 @@
 .screenGrid > div.weapons {
 	grid-area: weapons;
 }
-/*
-.screenGrid > div.weaponMods {
-	grid-area: weaponMods;
-}*/
 
 .weaponGrid {
 	display: grid;
@@ -82,6 +78,8 @@
 	width: 80px;
 	height: 30px;
 	position: relative;
+	border: 1px solid var(--borderClr);
+	border-radius: 4px;
 	/* WHERE THE HELL DOES THAT LIL' BIT OF TOP PADDING COME FROM??!! */
 }
 

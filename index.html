@@ -93,7 +93,7 @@
 			<select id='input_chartType' value='1'>
 				<option value='0'>TTK Over Accuracy</option>
 				<option value='1'>Damage Over Time</option>
-				<option value='2'>DPS Per Mag</option>
+				<option value='2'>Damage Per Second</option>
 				<option value='3'>Damage Per Mag</option>
 			</select><br>
 			
@@ -103,6 +103,14 @@
 			
 			<input type='checkbox' id='input_showShields'>
 			<label for='input_showShields'>Show Shields</label><br>
+			
+			<p>Minimum Accuracy:</p>
+			<input type='range' min='5' max='100' step='1' value='10' id='input_minAccuracy'>
+			<output id='minAccuracyText'></output><br>
+			
+			<p>Maximum Accuracy:</p>
+			<input type='range' min='5' max='100' step='1' value='100' id='input_maxAccuracy'>
+			<output id='maxAccuracyText'></output><br>
 		</div>
 	</div>
 

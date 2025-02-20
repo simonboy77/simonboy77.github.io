@@ -13,7 +13,7 @@ class Weapon {
 		this.reloadTimeFull = rf; this.reloadTimeTac   = rt;
 	}
 	
-	get_mag_size(weaponMods) {
+	get_mag_size(weaponMods, onlyBase = false) {
 		let magSize = this.magSizeNone;
 		
 		switch(weaponMods.magRarity) {
@@ -24,7 +24,10 @@ class Weapon {
 			case Rarity.MYTHIC: { magSize = this.magSizeEpic; } break;
 		}
 		
-		if(weaponMods.tacReload) { magSize -= 1; }
+		if(!onlyBase) {
+			if(weaponMods.tacReload) { magSize -= 1; }
+		}
+		
 		return magSize;
 	}
 	
@@ -87,21 +90,47 @@ class Weapon {
 		}
 		
 		averageDamage += this.get_body_damage(damageMods) * bodyshotRate;
-		averageDamage *= damageMods.accuracy;
+		averageDamage *= damageMods.hitRate;
 		if(doRounding) { averageDamage = Math.round(averageDamage); }
 		
 		return averageDamage;
 	}
 	
+	validate_weapon(weaponMods) {
+		if (this.bodyDamage <= 0.0) {
+			console.warn('invalid bodyDamage: ', this.bodyDamage);
+			return false;
+		}
+		else if (this.get_mag_size(weaponMods) <= 0) {
+			console.warn('invalid magSize: ', this.get_mag_size(weaponMods));
+			return false;
+		}
+		
+		return true;
+	}
+	
+	get_damage_per_mag(damageMods, weaponMods, onlyBase = false) {
+		let totalMagSize = this.get_mag_size(weaponMods, onlyBase);		
+		let averageDamage = this.get_average_damage(damageMods);
+		
+		return totalMagSize * averageDamage;
+	}
+	
+	get_fire_time_per_mag(weaponMods) {
+		let totalMagSize = this.get_mag_size(weaponMods);
+		return this.secondsPerRound * (totalMagSize - 1); // first bullet is instant
+	}
+	
 	fire_for_time(seconds, damageMods, weaponMods) {
 		const data = [];
 		
-		let totalMagSize = this.get_mag_size(weaponMods);
-		if(totalMagSize <= 0 || seconds <= 0.0) {
-			console.warn('invalid magSize (', totalMagSize, ') or seconds (', seconds, ')');
+		if (!this.validate_weapon(weaponMods)) { return data; }
+		if (seconds <= 0.0) {
+			console.warn('invalid seconds :', seconds);
 			return data;
 		}
 		
+		let totalMagSize = this.get_mag_size(weaponMods);		
 		let averageDamage = this.get_average_damage(damageMods);
 		let reloadTime = this.get_reload_time(weaponMods);
 		
@@ -122,11 +151,35 @@ class Weapon {
 				secondsPassed += reloadTime;
 				
 				if(secondsPassed > seconds) { secondsPassed = seconds; }
-				data.push({x:secondsPassed,y:totalDamage}); // necessary?
+				data.push({x:secondsPassed,y:totalDamage});
 			}
 		}
 		
 		return data;
+	}
+	
+	calc_ttk(damageMods, weaponMods) {
+		if (!this.validate_weapon(weaponMods)) { return 0.0; }
+		
+		let totalMagSize = this.get_mag_size(weaponMods);		
+		let averageDamage = this.get_average_damage(damageMods);
+		let averageDamagePerMag = this.get_damage_per_mag(damageMods, weaponMods);
+		
+		let reloadTime = this.get_reload_time(weaponMods);
+		let fireTime = this.get_fire_time_per_mag(weaponMods);
+		
+		let targetHP = damageMods.shield + damageMods.health;
+		let secondsPassed = 0.0;
+		
+		while(targetHP >= averageDamagePerMag) {
+			targetHP -= averageDamagePerMag;
+			secondsPassed += (fireTime + reloadTime);
+		}
+		
+		let finalRounds = Math.ceil(targetHP / averageDamage);
+		secondsPassed += this.secondsPerRound * (finalRounds - 1); // first bullet is instant
+		
+		return secondsPassed;
 	}
 }
 
@@ -141,7 +194,7 @@ class Shotgun extends Weapon {
 class ModdedWeapon {
 	constructor(weapon, weaponMods) {
 		this.weapon = weapon;
-		this.weaponsMods = weaponMods;
+		this.weaponMods = weaponMods;
 		
 		let letters = '0123456789ABCDEF';
 		this.color = '#';
@@ -154,8 +207,16 @@ class ModdedWeapon {
 		return this.weapon.name;
 	}
 	
+	calc_ttk(damageMods) {
+		return this.weapon.calc_ttk(damageMods, this.weaponMods);
+	}
+	
 	fire_for_time(seconds, damageMods) {
-		return this.weapon.fire_for_time(seconds, damageMods, weaponMods);
+		return this.weapon.fire_for_time(seconds, damageMods, this.weaponMods);
+	}
+	
+	get_damage_per_mag(damageMods) {
+		return this.weapon.get_damage_per_mag(damageMods, this.weaponMods, true);
 	}
 }
 
@@ -169,6 +230,7 @@ const weapons_S24 = [
 	// Prowler
 	new Weapon('R-99', 13.0, 1.2, 0.8, 18.0, 17, 20, 23, 26, 2.45, 1.8),
 	new Weapon('Volt', 15.0, 1.25, 0.8, 12.0, 19, 21, 23, 26, 2.03, 1.44),
-	new Weapon('C.A.R.', 14.0, 1.25, 0.8, 15.4, 19, 22, 24, 27, 2.13, 1.7)
+	new Weapon('C.A.R.', 14.0, 1.25, 0.8, 15.4, 19, 22, 24, 27, 2.13, 1.7),
+	// Devotion
 ];
 
