@@ -9,14 +9,22 @@ class Weapon {
 		this.name = name;
 		this.bodyDamage = bd; this.headshotMultiplier = hm; this.legshotMultiplier = lm;
 		
-		this.roundsPerSecond = rps;
-		this.roundsPerMinute = this.roundsPerSecond * 60.0;
-		this.secondsPerRound = 1.0 / this.roundsPerSecond;
+		this.baseRoundsPerSecond = rps;
+		this.baseRoundsPerMinute = this.baseRoundsPerSecond * 60.0;
+		this.baseSecondsPerRound = 1.0 / this.baseRoundsPerSecond;
 		
 		this.magSizeNone = mNone; this.magSizeCommon = mCommon;
 		this.magSizeRare = mRare; this.magSizeEpic = mEpic;
 		
 		this.reloadTimeFull = rf; this.reloadTimeTac   = rt;
+	}
+	
+	get_rounds_per_second(weaponMods) {
+		return this.baseRoundsPerSecond;
+	}
+	
+	get_seconds_per_round(weaponMods) {
+		return (1.0 / this.get_rounds_per_second(weaponMods));
 	}
 	
 	get_mag_size(weaponMods, onlyBase = false) {
@@ -117,7 +125,9 @@ class Weapon {
 	
 	get_fire_time_per_mag(weaponMods) {
 		let totalMagSize = this.get_mag_size(weaponMods);
-		return this.secondsPerRound * (totalMagSize - 1); // first bullet is instant
+		let secondsPerRound = this.get_seconds_per_round(weaponMods);
+		
+		return secondsPerRound * (totalMagSize - 1); // first bullet is instant
 	}
 	
 	calc_dpm(damageMods, weaponMods, onlyBase = false) {
@@ -138,6 +148,7 @@ class Weapon {
 		
 		let totalMagSize = this.get_mag_size(weaponMods);		
 		let averageDamage = this.get_average_damage(damageMods);
+		let secondsPerRound = this.get_seconds_per_round(weaponMods);
 		let reloadTime = this.get_reload_time(weaponMods);
 		
 		let totalDamage = 0.0;
@@ -150,7 +161,7 @@ class Weapon {
 			data.push({x:secondsPassed,y:totalDamage});
 			
 			if(curMag > 0) {
-				secondsPassed += this.secondsPerRound;
+				secondsPassed += secondsPerRound;
 			}
 			else {
 				curMag = totalMagSize;
@@ -183,7 +194,9 @@ class Weapon {
 		}
 		
 		let finalRounds = Math.ceil(targetHP / averageDamage);
-		secondsPassed += this.secondsPerRound * (finalRounds - 1); // first bullet is instant
+		let secondsPerRound = this.get_seconds_per_round(weaponMods);
+		
+		secondsPassed += secondsPerRound * (finalRounds - 1); // first bullet is instant
 		
 		return secondsPassed;
 	}
@@ -192,17 +205,55 @@ class Weapon {
 		if (!this.validate_weapon(weaponMods)) { return 0.0; }
 		
 		let averageDamage = this.get_average_damage(damageMods);
-		let dps = averageDamage * this.roundsPerSecond;
+		let dps = averageDamage * this.get_rounds_per_second(weaponMods);
 		
 		return dps;
 	}
 }
 
 class Shotgun extends Weapon {
-	constructor(pc, bd, hm, lm) {
-		super(bd, hm, lm);
-		
+	constructor(name, bd, hm, lm, rps, mNone, rf, rt, pc) {
+		super(name, bd, hm, lm, rps, mNone, mNone, mNone, mNone, rf, rt);
 		this.pelletCount = pc;
+	}
+	
+	get_rounds_per_second(weaponMods) {
+		let rps = this.baseRoundsPerSecond;
+		switch(weaponMods.shotgunBoltRarity)
+        {
+            case Rarity.COMMON:    { rps *= 1.15; } break;
+            case Rarity.RARE:      { rps *= 1.25; } break;
+            case Rarity.EPIC:
+            case Rarity.LEGENDARY:
+            case Rarity.MYTHIC:    { rps *= 1.35; } break;
+
+            default: break;
+        }
+        
+        return rps;
+	}
+	
+	get_average_damage(damageMods, doRounding = true) {
+		let averageDamage = 0.0;
+		let bodyshotRate = 1.0;
+		
+		if(damageMods.headshotRate > 0.0) {
+			let headshotDamage = this.get_headshot_damage(damageMods);
+			averageDamage += headshotDamage * damageMods.headshotRate;
+			bodyshotRate -= damageMods.headshotRate;
+		}
+		
+		if(damageMods.legshotRate > 0.0) {
+			let legshotDamage = this.get_legshot_damage(damageMods);
+			averageDamage += legshotDamage * damageMods.legshotRate;
+			bodyshotRate -= damageMods.legshotRate;
+		}
+		
+		averageDamage += this.get_body_damage(damageMods) * bodyshotRate;
+		averageDamage *= damageMods.hitRate;
+		if(doRounding) { averageDamage = Math.round(averageDamage); }
+		
+		return (averageDamage * this.pelletCount);
 	}
 }
 
@@ -251,5 +302,19 @@ const weapons_S24 = [
 	new Weapon('Volt', 15.0, 1.25, 0.8, 12.0, 19, 21, 23, 26, 2.03, 1.44),
 	new Weapon('C.A.R.', 14.0, 1.25, 0.8, 15.4, 19, 22, 24, 27, 2.13, 1.7),
 	// Devotion
+	// L-STAR
+	new Weapon('Spitfire', 21.0, 1.25, 0.85, 9.0, 35, 40, 45, 50, 4.2, 3.4),
+	// Rampage
+	new Weapon('Scout', 35.0, 1.6, 0.75, 3.9, 10, 15, 18, 20, 3.0, 2.4),
+	// Triple_Take
+	// 30-30
+	// Bocek
+	// Charge_Rifle
+	// Longbow
+	// Kraber
+	// Sentinel
+	new Shotgun('EVA-8', 7.0, 1.25, 1.0, 2.6, 8, 3.0, 2.75, 8),
+	// Mastiff
+	new Shotgun('Mozambique', 15.0, 1.25, 1.0, 2.66, 5, 2.6, 2.1, 3),
 ];
 
