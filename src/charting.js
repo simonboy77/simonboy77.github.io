@@ -19,6 +19,8 @@ function get_chart_title(type)
 }
 
 let baseOptions = {
+	maintainAspectRatio: false,
+	
 	scales: {
 		x: {
 			min: 0,
@@ -76,8 +78,7 @@ let baseOptions = {
 	},
 	animation: {
 		duration: 0
-	},
-	maintainAspectRatio: false
+	}
 }
 
 let ttkOverAccuracyOptions = cloneDeep(baseOptions);
@@ -162,7 +163,6 @@ function chart_update_damage_over_time(chart, datasets, graphMods)
 function chart_update_damage_per_second(chart, data, graphMods)
 {
 	chart.data = data;
-	
 	chart.update();
 }
 

@@ -1,3 +1,9 @@
+// TODO:
+// - add get_seconds_per_round function to weapon class, so the shotgun class only needs to 
+// overwrite that and get_average_damage/headshot/legshot, and not rewrite the ttk/dpm/dps functions
+// - give the modded weapon class another weaponmods instance, but wrapped with a boolean
+// 'followGlobal', which is used for individual changes to weapon mods
+
 class Weapon {
 	constructor(name, bd, hm, lm, rps, mNone, mCommon, mRare, mEpic, rf, rt) {
 		this.name = name;
@@ -109,19 +115,19 @@ class Weapon {
 		return true;
 	}
 	
-	get_damage_per_mag(damageMods, weaponMods, onlyBase = false) {
+	get_fire_time_per_mag(weaponMods) {
+		let totalMagSize = this.get_mag_size(weaponMods);
+		return this.secondsPerRound * (totalMagSize - 1); // first bullet is instant
+	}
+	
+	calc_dpm(damageMods, weaponMods, onlyBase = false) {
 		let totalMagSize = this.get_mag_size(weaponMods, onlyBase);		
 		let averageDamage = this.get_average_damage(damageMods);
 		
 		return totalMagSize * averageDamage;
 	}
 	
-	get_fire_time_per_mag(weaponMods) {
-		let totalMagSize = this.get_mag_size(weaponMods);
-		return this.secondsPerRound * (totalMagSize - 1); // first bullet is instant
-	}
-	
-	fire_for_time(seconds, damageMods, weaponMods) {
+	calc_dot(seconds, damageMods, weaponMods) {
 		const data = [];
 		
 		if (!this.validate_weapon(weaponMods)) { return data; }
@@ -163,7 +169,7 @@ class Weapon {
 		
 		let totalMagSize = this.get_mag_size(weaponMods);		
 		let averageDamage = this.get_average_damage(damageMods);
-		let averageDamagePerMag = this.get_damage_per_mag(damageMods, weaponMods);
+		let averageDamagePerMag = this.calc_dpm(damageMods, weaponMods);
 		
 		let reloadTime = this.get_reload_time(weaponMods);
 		let fireTime = this.get_fire_time_per_mag(weaponMods);
@@ -180,6 +186,15 @@ class Weapon {
 		secondsPassed += this.secondsPerRound * (finalRounds - 1); // first bullet is instant
 		
 		return secondsPassed;
+	}
+	
+	calc_dps(damageMods, weaponsMods) {
+		if (!this.validate_weapon(weaponMods)) { return 0.0; }
+		
+		let averageDamage = this.get_average_damage(damageMods);
+		let dps = averageDamage * this.roundsPerSecond;
+		
+		return dps;
 	}
 }
 
@@ -207,16 +222,20 @@ class ModdedWeapon {
 		return this.weapon.name;
 	}
 	
+	calc_dpm(damageMods) {
+		return this.weapon.calc_dpm(damageMods, this.weaponMods, true);
+	}
+	
+	calc_dot(seconds, damageMods) {
+		return this.weapon.calc_dot(seconds, damageMods, this.weaponMods);
+	}
+	
 	calc_ttk(damageMods) {
 		return this.weapon.calc_ttk(damageMods, this.weaponMods);
 	}
 	
-	fire_for_time(seconds, damageMods) {
-		return this.weapon.fire_for_time(seconds, damageMods, this.weaponMods);
-	}
-	
-	get_damage_per_mag(damageMods) {
-		return this.weapon.get_damage_per_mag(damageMods, this.weaponMods, true);
+	calc_dps(damageMods) {
+		return this.weapon.calc_dps(damageMods, this.weaponMods);
 	}
 }
 

@@ -5,13 +5,30 @@
 
 * {
 	box-sizing: border-box;
-	padding: 0;
-	margin: 0;
-
+	
 	/* Prevent text selection */
 	-webkit-user-select: none; /* Safari */
 	-ms-user-select: none; /* IE 10 and IE 11 */
 	user-select: none; /* Standard syntax */
+}
+
+h2 {
+	text-align: center;
+	font-family: apex-black;
+}
+
+input[type='range'] {
+	width: 100%;
+}
+
+.breakDiv {
+	height: 1em;
+	clear: left;
+}
+
+.screen {
+	padding: 0;
+	margin: 0;
 }
 
 .screenGrid {
@@ -20,11 +37,11 @@
 	grid-template-areas:
 		'graph   mods'
 		'weapons mods';
-	grid-template-columns: 2fr 1fr;
-	grid-template-rows: 1fr 1fr;
+	grid-template-columns: 2fr 18em;
+	grid-template-rows: 2fr 1fr;
 	background-color: #0D313A;
 	padding: 8px;
-	gap: 4px;
+	grid-gap: 4px;
 	height: 100vh;
 }
 
@@ -53,9 +70,9 @@
 	grid-template-areas:
 		'activeWeapons'
 		'weaponSelect';
-	grid-template-rows: 2fr 1fr;
+	grid-template-rows: 2fr 3fr;
 	padding: 4px;
-	gap: 4px;
+	grid-gap: 4px;
 	height: 100%;
 }
 
@@ -74,35 +91,118 @@
 	border: 2px solid #0D313A;
 }
 
-.weaponBtn {
-	width: 80px;
-	height: 30px;
-	position: relative;
-	border: 1px solid var(--borderClr);
-	border-radius: 4px;
-	/* WHERE THE HELL DOES THAT LIL' BIT OF TOP PADDING COME FROM??!! */
+.weaponSelectGrid {
+	display: grid;
+	grid-template: 3em/repeat(auto-fit, 7em);
+	grid-gap: 0.5em;
 }
 
-/* to convert hex color to css filter: https://codepen.io/sosuke/pen/Pjoqqp */
-.weaponImg {
-	position: absolute;
+.collapsible {
+	background-color: #777;
+	color: white;
+	cursor: pointer;
+	padding: 1em;
+	width: 100%;
+	border: none;
+	text-align: left;
+	outline: none;
+}
+
+.active, .collapsible:hover {
+	background-color: #555;
+}
+
+.collapsible:after {
+	content: '\23F7';
+	color: white;
+	font-weight: bold;
+	float: right;
+	margin-left: 5px;
+}
+
+.active:after {
+	content: "\23F6";
+}
+
+.collapsibleContent {
+	padding-left: 1em;
+	padding-right: 1em;
+	max-height: 0;
+	overflow: hidden;
+	transition: max-height 0.2s ease-out;
+	border-left: 1px solid black;
+	border-right: 1px solid black;
+	border-bottom: 1px solid black;
+	border-bottom-left-radius: 8px;
+	border-bottom-right-radius: 8px;
+}
+
+.weaponBtn {
+	position: relative;
+	display: flex;
+	
+	justify-content: center;
+	align-items: center;
+	
 	width: 100%;
 	height: 100%;
-	top: 0;
-  	left: 0;
+	
+	border: 2px solid var(--borderClr);
+	border-radius: 4px;
+}
+
+.weaponImg {
+	width: 100%;
+	height: 100%;
+  	padding: 1px 1px;
+  	
+  	/* to convert hex color to css filter: https://codepen.io/sosuke/pen/Pjoqqp */
   	filter: invert(87%) sepia(0%) saturate(63%) hue-rotate(226deg) brightness(89%) contrast(91%);
 }
 
 .weaponTxt {
 	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	white-space: nowrap;
 }
 
-h2 {
-	text-align: center;
-	font-family: apex-black;
+.dropdown {
+	margin-top: 1em;
+	margin-right: 1em;
+	padding-top: 0;
+	width: 8em;
+	float: left;
+}
+
+.dropdownTitle {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.dropdownValue {
+	width: 100%;
+}
+
+.checkbox {
+	width: 12em;
+	float: left;
+}
+
+.slider {
+	margin-top: 1em;
+	margin-right: 1em;
+	padding-top: 0;
+	width: 14em;
+	float: left;
+}
+
+.sliderTitle {
+	margin-top: 0;
+	margin-bottom: 0;
+	float: left;
+}
+
+.sliderValue {
+	margin-top: 0;
+	margin-bottom: 0;
+	float: right;
 }
 

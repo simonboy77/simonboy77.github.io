@@ -6,120 +6,168 @@
 <link rel='stylesheet' href='style.css'>
 </head>
 
-<body onload='setup_page()'>
+<body class='screen' onload='setup_page()'>
 
 <div class='screenGrid'>
 	<div class='graph'>
 		<canvas id='statChart'></canvas>
 	</div>
 	<div class='mods'>
-		<h2>Modify</h2>
-		<input type='radio' id='input_damageMods' name='modeType' value='0' checked='true'>
-		<label for='input_damageMods'>Damage</label>
-		<input type='radio' id='input_weaponMods' name='modeType' value='1'>
-		<label for='input_weaponMods'>Weapon</label>
-		<input type='radio' id='input_chartMods' name='modeType' value='2'>
-		<label for='input_chartMods'>Graph</label><br><br>
+		<button type='button' class='collapsible'>Weapon Modifications</button>
+		<div class='collapsibleContent'>
+			<div class='dropdown'>
+				<p class='dropdownTitle'>Magazine:</p>
+				<select class='dropdownValue' id='input_mag'>
+					<option value='0'>None</option>
+					<option value='1'>Common</option>
+					<option value='2'>Rare</option>
+					<option value='3'>Epic</option>
+				</select>
+			</div>
 
-		<div id='damageModsDiv' hidden='true'>
-			<p>Target Shield:</p>
-			<select id='input_shield'>
-				<option value='0'>None</option>
-				<option value='1'>Common</option>
-				<option value='2'>Rare</option>
-				<option value='3'>Epic</option>
-				<option value='4'>Legendary</option>
-				<option value='5'>Mythic</option>
-			</select><br>
+			<div class='dropdown'>
+				<p class='dropdownTitle'>Stock:</p>
+				<select class='dropdownValue' id='input_stock'>
+					<option value='0'>None</option>
+					<option value='1'>Common</option>
+					<option value='2'>Rare</option>
+					<option value='3'>Epic</option>
+				</select>
+			</div>
 
-			<p>Accuracy:</p>
-			<input type='range' min='10' max='100' step='1' value='100' id='input_accuracy'>
-			<output id='accuracyText'></output><br>
+			<div class='dropdown'>
+				<p class='dropdownTitle'>Shotgun Bolt:</p>
+				<select class='dropdownValue' id='input_bolt'>
+					<option value='0'>None</option>
+					<option value='1'>Common</option>
+					<option value='2'>Rare</option>
+					<option value='3'>Epic</option>
+				</select>
+			</div>
 
-			<p>Headshot Rate:</p>
-			<input type='range' min='0' max='100' step='1' value='0' id='input_headshot'>
-			<output id='headshotText'></output><br>
+			<div class='breakDiv'></div>
 
-			<p>Legshot Rate:</p>
-			<input type='range' min='0' max='100' step='1' value='0' id='input_legshot'>
-			<output id='legshotText'></output><br>
-			
-			<br>
+			<div class='checkbox''>
+				<input type='checkbox' id='input_tacReload'>
+				<label for='input_tacReload'>Tactical Reload</label>
+			</div>
 
-			<input type='checkbox' id='input_fortified'>
-			<label for='input_fortified'>Fortified</label><br>
+			<div class='checkbox'>
+				<input type='checkbox' id='input_splatterRounds'>
+				<label for='input_splatterRounds'>Splatter Rounds</label>
+			</div>
 
-			<input type='checkbox' id='input_amped'>
-			<label for='input_amped'>Amped</label><br>
-
-			<input type='checkbox' id='input_marked'>
-			<label for='input_marked'>Vantage Mark</label><br>
-		</div>
-
-		<div id='weaponModsDiv' hidden='true'>
-			<p>Magazine:</p>
-			<select id='input_mag'>
-				<option value='0'>None</option>
-				<option value='1'>Common</option>
-				<option value='2'>Rare</option>
-				<option value='3'>Epic</option>
-			</select><br>
-
-			<p>Stock:</p>
-			<select id='input_stock'>
-				<option value='0'>None</option>
-				<option value='1'>Common</option>
-				<option value='2'>Rare</option>
-				<option value='3'>Epic</option>
-			</select><br>
-
-			<p>Shotgun Bolt:</p>
-			<select id='input_bolt'>
-				<option value='0'>None</option>
-				<option value='1'>Common</option>
-				<option value='2'>Rare</option>
-				<option value='3'>Epic</option>
-			</select><br>
-
-			<input type='checkbox' id='input_tacReload'>
-			<label for='input_tacReload'>Tactical Reload</label><br>
-
-			<input type='checkbox' id='input_splatterRounds'>
-			<label for='input_splatterRounds'>Splatter Rounds</label><br>
-		</div>
+			<div class='breakDiv'></div>
+		</div><br>
 		
-		<div id='chartModsDiv'>
-			<p>Type:</p>
-			<select id='input_chartType' value='1'>
-				<option value='0'>TTK Over Accuracy</option>
-				<option value='1'>Damage Over Time</option>
-				<option value='2'>Damage Per Second</option>
-				<option value='3'>Damage Per Mag</option>
-			</select><br>
+		<button type='button' class='collapsible'>Damage Modifications</button>
+		<div class='collapsibleContent'>
+			<div class='dropdown'>
+				<p class='dropdownTitle'>Target Shield:</p>
+				<select class='dropdownValue' id='input_shield'>
+					<option value='0'>None</option>
+					<option value='1'>Common</option>
+					<option value='2'>Rare</option>
+					<option value='3'>Epic</option>
+					<option value='4'>Legendary</option>
+					<option value='5'>Mythic</option>
+				</select>
+			</div>
 			
-			<p>Seconds:</p>
-			<input type='range' min='1' max='20' step='1' value='10' id='input_seconds'>
-			<output id='secondsText'></output><br>
+			<div class='breakDiv'></div>
+
+			<div class='slider'>
+				<p class='sliderTitle'>Accuracy:</p>
+				<output class='sliderValue' id='accuracyText'></output>
+				<input type='range' min='10' max='100' step='1' value='100' id='input_accuracy'>
+			</div>
+
+			<div class='slider'>
+				<p class='sliderTitle'>Headshot Rate:</p>
+				<output class='sliderValue' id='headshotText'></output>
+				<input type='range' min='0' max='100' step='1' value='0' id='input_headshot'>
+			</div>
+
+			<div class='slider'>
+				<p class='sliderTitle'>Legshot Rate:</p>
+				<output class='sliderValue' id='legshotText'></output>
+				<input type='range' min='0' max='100' step='1' value='0' id='input_legshot'>
+			</div>
 			
-			<input type='checkbox' id='input_showShields'>
-			<label for='input_showShields'>Show Shields</label><br>
+			<div class='breakDiv'></div>
+
+			<div class='checkbox'>
+				<input type='checkbox' id='input_fortified'>
+				<label for='input_fortified'>Fortified</label><br>
+			</div>
+
+			<div class='checkbox'>
+				<input type='checkbox' id='input_amped'>
+				<label for='input_amped'>Amped</label><br>
+			</div>
+
+			<div class='checkbox'>
+				<input type='checkbox' id='input_marked'>
+				<label for='input_marked'>Vantage Mark</label><br>
+			</div>
 			
-			<p>Minimum Accuracy:</p>
-			<input type='range' min='5' max='100' step='1' value='10' id='input_minAccuracy'>
-			<output id='minAccuracyText'></output><br>
+			<div class='breakDiv'></div>
+		</div><br>
+		
+		<button type='button' class='collapsible'>Graph Modifications</button>
+		<div class='collapsibleContent'>
+			<div class='dropdown'>
+				<p class='dropdownTitle'>Graph Type:</p>
+				<select id='input_chartType' value='1'>
+					<option value='0'>TTK Over Accuracy</option>
+					<option value='1'>Damage Over Time</option>
+					<option value='2'>Damage Per Second</option>
+					<option value='3'>Damage Per Mag</option>
+				</select>
+			</div>
 			
-			<p>Maximum Accuracy:</p>
-			<input type='range' min='5' max='100' step='1' value='100' id='input_maxAccuracy'>
-			<output id='maxAccuracyText'></output><br>
+			<div class='breakDiv'></div>
+			
+			<div class='checkbox'>
+				<input type='checkbox' id='input_showShields'>
+				<label for='input_showShields'>Show Shields</label><br>
+			</div>
+			
+			<div class='breakDiv' style='height:0;'></div>
+			
+			<div class='slider'>
+				<p class='sliderTitle'>Seconds:</p>
+				<output class='sliderValue' id='secondsText'></output><br>
+				<input type='range' min='1' max='20' step='0.5' value='10' id='input_seconds'>
+			</div>
+			
+			<div class='slider'>
+				<p class='sliderTitle'>Minimum Accuracy:</p>
+				<output class='sliderValue' id='minAccuracyText'></output>
+				<input type='range' min='5' max='100' step='1' value='10' id='input_minAccuracy'>
+			</div>
+			
+			<div class='slider'>
+				<p class='sliderTitle'>Maximum Accuracy:</p>
+				<output class='sliderValue' id='maxAccuracyText'></output>
+				<input type='range' min='5' max='100' step='1' value='100' id='input_maxAccuracy'>
+				
+			</div>
+			
+			<div class='breakDiv'></div>
 		</div>
 	</div>
 
 	<div class='weapons'>
 		<div class='weaponGrid'>
-			<div class='activeWeapons' id='activeWeapons'>
+			<div class='activeWeapons'>
+				<div class='weaponSelectGrid' id='activeWeapons'>
+				</div>
 			</div>
 			
-			<div class='weaponSelect' id='weaponSelect'>
+			<div class='weaponSelect'>
+				<div class='weaponSelectGrid' id='weaponSelect'>
+				</div>
 			</div>
 		</div>
 	</div>

@@ -29,9 +29,6 @@ let minAccuracySlider = document.getElementById('input_minAccuracy');
 let maxAccuracySlider = document.getElementById('input_maxAccuracy');
 
 // Misc
-let damageRadioBtn = document.getElementById('input_damageMods');
-let weaponRadioBtn = document.getElementById('input_weaponMods');
-let chartRadioBtn = document.getElementById('input_chartMods');
 let accuracyText = document.getElementById('accuracyText');
 let headshotText = document.getElementById('headshotText');
 let legshotText  = document.getElementById('legshotText');
@@ -40,62 +37,50 @@ let minAccuracyText = document.getElementById('minAccuracyText');
 let maxAccuracyText = document.getElementById('maxAccuracyText');
 let activeWeaponDiv = document.getElementById('activeWeapons');
 let weaponSelectDiv = document.getElementById('weaponSelect');
-let damageModsDiv = document.getElementById('damageModsDiv');
-let weaponModsDiv = document.getElementById('weaponModsDiv');
-let chartModsDiv = document.getElementById('chartModsDiv');
+let collapsibles = document.getElementsByClassName('collapsible');
+
+for (let collapseIndex = 0; collapseIndex < collapsibles.length; ++collapseIndex) {
+	collapsibles[collapseIndex].addEventListener('click', function() {
+		this.classList.toggle('active');
+		let content = this.nextElementSibling;
+		
+		if (content.style.maxHeight) {
+			content.style.maxHeight = null;
+		} else {
+			content.style.maxHeight = content.scrollHeight + "px";
+		}
+	});
+}
 
 function update_slider_text(slider, text, postFix = '') {
 	text.value = slider.value + postFix;
 }
 
-function refresh_chart_damage_per_mag()
+function sort_bar_data(barData)
 {
-	let weaponData = {
-		labels: [],
-		datasets: [{
-			label: 'Damage Per Mag',
-			data: [],
-			backgroundColor: [],
-		}]
-	};
-	
-	for (let weaponIndex = 0; weaponIndex < activeWeapons.length; ++weaponIndex) {
-		let activeWeapon = activeWeapons[weaponIndex];
-		let oldMagRarity = activeWeapon.weaponMods.magRarity;
-		
-		weaponData.labels.push(activeWeapon.get_name());
-		weaponData.datasets[0].data.push(activeWeapon.get_damage_per_mag(damageMods));
-		weaponData.datasets[0].backgroundColor.push(activeWeapon.color);
-		
-		activeWeapon.weaponMods.magRarity = oldMagRarity;
-	}
-	
-	// Sort that shit
 	let sorted = false;
 	while(!sorted) {
 		sorted = true;
-		for (let weaponIndex = 0; weaponIndex < (weaponData.datasets[0].data.length - 1); ++weaponIndex) {
-			let weaponDPM = weaponData.datasets[0].data[weaponIndex];
-			let nextWeaponDPM = weaponData.datasets[0].data[weaponIndex + 1];
+		for (let dataIndex = 0; dataIndex < (barData.datasets[0].data.length - 1); ++dataIndex) {
+			let value = barData.datasets[0].data[dataIndex];
+			let nextValue = barData.datasets[0].data[dataIndex + 1];
 			
-			if (weaponDPM < nextWeaponDPM) {
-				weaponData.datasets[0].data[weaponIndex] = nextWeaponDPM;
-				weaponData.datasets[0].data[weaponIndex + 1] = weaponDPM;
+			if (value < nextValue) {
+				barData.datasets[0].data[dataIndex] = nextValue;
+				barData.datasets[0].data[dataIndex + 1] = value;
 				
-				let labelSwap = weaponData.labels[weaponIndex];
-				weaponData.labels[weaponIndex] = weaponData.labels[weaponIndex + 1];
-				weaponData.labels[weaponIndex + 1] = labelSwap;
+				let labelSwap = barData.labels[dataIndex];
+				barData.labels[dataIndex] = barData.labels[dataIndex + 1];
+				barData.labels[dataIndex + 1] = labelSwap;
 				
-				let colorSwap = weaponData.datasets[0].backgroundColor[weaponIndex];
-				weaponData.datasets[0].backgroundColor[weaponIndex] = weaponData.datasets[0].backgroundColor[weaponIndex + 1];
-				weaponData.datasets[0].backgroundColor[weaponIndex + 1] = colorSwap;
+				let colorSwap = barData.datasets[0].backgroundColor[dataIndex];
+				barData.datasets[0].backgroundColor[dataIndex] = barData.datasets[0].backgroundColor[dataIndex + 1];
+				barData.datasets[0].backgroundColor[dataIndex + 1] = colorSwap;
 				
 				sorted = false;
 			}
 		}
 	}
-	
-	chart_update_damage_per_mag(chart, weaponData, chartMods, weaponMods.magRarity);
 }
 
 function refresh_chart_ttk_over_accuracy()
@@ -133,7 +118,7 @@ function refresh_chart_damage_over_time()
 		let activeWeapon = activeWeapons[weaponIndex];
 		weaponDatasets.push({
 			label: activeWeapon.get_name(),
-			data: activeWeapon.fire_for_time(chartMods.seconds, damageMods),
+			data: activeWeapon.calc_dot(chartMods.seconds, damageMods),
 			borderColor: activeWeapon.color
 		});
 	}
@@ -141,21 +126,61 @@ function refresh_chart_damage_over_time()
 	chart_update_damage_over_time(chart, weaponDatasets, chartMods);
 }
 
+function refresh_chart_damage_per_second()
+{
+	let weaponData = {
+		labels: [],
+		datasets: [{
+			label: 'Damage Per Second',
+			data: [],
+			backgroundColor: [],
+		}]
+	};
+	
+	for (let weaponIndex = 0; weaponIndex < activeWeapons.length; ++weaponIndex) {
+		let activeWeapon = activeWeapons[weaponIndex];
+		
+		weaponData.labels.push(activeWeapon.get_name());
+		weaponData.datasets[0].data.push(activeWeapon.calc_dps(damageMods));
+		weaponData.datasets[0].backgroundColor.push(activeWeapon.color);
+	}
+	
+	sort_bar_data(weaponData);
+	chart_update_damage_per_second(chart, weaponData, chartMods);
+}
+
+function refresh_chart_damage_per_mag()
+{
+	let weaponData = {
+		labels: [],
+		datasets: [{
+			label: 'Damage Per Mag',
+			data: [],
+			backgroundColor: [],
+		}]
+	};
+	
+	for (let weaponIndex = 0; weaponIndex < activeWeapons.length; ++weaponIndex) {
+		let activeWeapon = activeWeapons[weaponIndex];
+		
+		weaponData.labels.push(activeWeapon.get_name());
+		weaponData.datasets[0].data.push(activeWeapon.calc_dpm(damageMods));
+		weaponData.datasets[0].backgroundColor.push(activeWeapon.color);
+	}
+	
+	sort_bar_data(weaponData);
+	chart_update_damage_per_mag(chart, weaponData, chartMods, weaponMods.magRarity);
+}
+
 function refresh_chart()
 {
 	switch(chartMods.type)
 	{
 		case ChartTypes.TTK_OVER_ACCURACY: { refresh_chart_ttk_over_accuracy(); } break;
-		case ChartTypes.DAMAGE_OVER_TIME: {	refresh_chart_damage_over_time(); } break;
-		case ChartTypes.DPS_PER_MAG: {  } break;
-		case ChartTypes.DAMAGE_PER_MAG: { refresh_chart_damage_per_mag(); } break;
+		case ChartTypes.DAMAGE_OVER_TIME:  { refresh_chart_damage_over_time(); } break;
+		case ChartTypes.DAMAGE_PER_SECOND: { refresh_chart_damage_per_second(); } break;
+		case ChartTypes.DAMAGE_PER_MAG:    { refresh_chart_damage_per_mag(); } break;
 	}
-}
-
-function refresh_mod_div() {
-	damageModsDiv.hidden = !damageRadioBtn.checked;
-	weaponModsDiv.hidden = !weaponRadioBtn.checked;
-	chartModsDiv.hidden  = !chartRadioBtn.checked;
 }
 
 function show_and_hide() {
@@ -288,18 +313,6 @@ maxAccuracySlider.oninput = function() {
 	refresh_chart();
 }
 
-damageRadioBtn.oninput = function() {
-	refresh_mod_div();
-}
-
-weaponRadioBtn.oninput = function() {
-	refresh_mod_div();
-}
-
-chartRadioBtn.oninput = function() {
-	refresh_mod_div();
-}
-
 function add_weapon(weaponIndex)
 {
 	if(weaponIndex >= weapons_S24.length) {
@@ -348,7 +361,6 @@ function remove_weapon(activeIndex)
 
 function setup_page()
 {
-	refresh_mod_div();
 	show_and_hide();
 	
 	update_slider_text(accuracySlider, accuracyText, '%');
