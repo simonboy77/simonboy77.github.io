@@ -1,6 +1,11 @@
 :root {
 	--spacing: 0.5em;
+	
+	--borderClr: #000000;
 	--borderWidth: 2px;
+	
+	--white: #F0F0F0;
+	--whiteHover: #D0D0D0;
 }
 
 @font-face {

@@ -89,6 +89,17 @@ globalBoltSelect.oninput = function() {
 
 globalTacReloadCheckbox.oninput = function() {
 	globalWeaponMods.tacReload = this.checked;
+	
+	for(let aIndex = 0; aIndex < activeWeapons.length; ++aIndex) {
+		if(activeWeapons[aIndex].weaponMods.followGlobal) {
+			if(aIndex == selectedWeaponIndex) {
+				sw_follow_global(true);
+			} else {
+				activeWeapons[aIndex].weaponMods.tacReload = globalWeaponMods.tacReload;
+			}
+		}
+	}
+	
 	refresh_chart();
 }
 

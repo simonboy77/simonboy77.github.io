@@ -19,11 +19,9 @@
 	float: right;
 }
 
-
 .foldOpen:after {
 	content: '\23F6'; /* arrow down */
 }
-
 
 .foldContent {	
 	margin-bottom: var(--spacing);
@@ -42,6 +40,7 @@
 	margin-top: var(--spacing);
 	background-color: #555555;
 	color: white;
+	cursor: pointer;
 	width: 100%;
 	border: none;
 	text-align: left;

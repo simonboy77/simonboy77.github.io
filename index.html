@@ -15,7 +15,7 @@
 	<div class='mods' id='modsDiv'>
 		<div class='modsGrid'>
 			<div class='activeWeaponMods' style='display:none;' id='awmDiv'>
-				<div class='displayHeader' id='awmHeader'>Weapon Modifications</div>
+				<button class='displayHeader' id='awmHeader'>Weapon Modifications</button>
 				<div class='displayContent' id='awmContent'>
 					<div class='breakDiv'></div>					
 					
@@ -25,6 +25,8 @@
 							Follow Global
 						</label>
 					</div>
+					
+					<input type='image' class='trashBtn' id='input_delete' src='res/trash.svg'/>
 					
 					<div class='dropdown'>
 						<p class='elementTitle'>Magazine:</p>
@@ -57,13 +59,22 @@
 					</div>
 					
 					<div class='breakDiv'></div>
+					
+					<div class='checkbox'>
+						<label for='input_tacReload'>
+							<input type='checkbox' id='input_tacReload'>
+							Tactical Reload
+						</label>
+					</div>
+					
+					<div class='breakDiv'></div>
 				</div>
 			</div>
 			
 			<div class='globalMods' id='globalModsDiv'>
 				<button class='foldBtn'>Global Weapon Modifications</button>
 				<div class='foldContent'>
-					<div class='dropdown'>
+					<div class='dropdown' disabled>
 						<p class='elementTitle'>Magazine:</p>
 						<select class='dropdownValue' id='input_globalMag'>
 							<option value='0'>None</option>

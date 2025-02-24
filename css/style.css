@@ -79,18 +79,18 @@
 
 .weaponGrid > div.activeWeapons {
 	grid-area: activeWeapons;
-	border: 2px solid #0D313A;
+	border: var(--borderWidth) solid var(--borderClr);
 }
 
 .weaponGrid > div.weaponSelect {
 	grid-area: weaponSelect;
-	border: 2px solid #0D313A;
+	border: var(--borderWidth) solid var(--borderClr);
 }
 
 .weaponSelectGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, 7em);
-	grid-auto-rows: 3em;
+	grid-auto-rows: 2.5em;
 	grid-gap: var(--spacing);
 }
 

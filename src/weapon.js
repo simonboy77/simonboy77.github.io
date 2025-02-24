@@ -369,14 +369,18 @@ class ModdedWeapon {
 		this.color = hex_color_from_index(colorNum);
 	}
 	
-	get_name(withMag = false) {
-		let name = this.weapon.name;
+	get_name() {
+		return this.weapon.name;
+	}
+	
+	get_description(globalWeaponMods) {
+		let description = this.get_name();
 		
-		if(withMag) {
-			name += ' (' + get_rarity_name(this.weaponMods.magRarity) + ' Mag)';
+		if(this.weaponMods.magRarity != globalWeaponMods.magRarity) {
+			description += ' (' + get_rarity_name(this.weaponMods.magRarity) + ' Mag)';
 		}
-
-		return name;
+		
+		return description;
 	}
 	
 	calc_dpm(damageMods) {

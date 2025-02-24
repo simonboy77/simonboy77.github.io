@@ -5,11 +5,21 @@
 	justify-content: center;
 	align-items: center;
 	
+	background-color: var(--white);
+	
 	width: 100%;
 	height: 100%;
 	
-	border: 2px solid var(--borderClr);
+	border: var(--borderWidth) solid var(--borderClr);
 	border-radius: 4px;
+}
+
+.weaponBtn:hover {
+	background-color: var(--whiteHover);
+}
+
+.weaponSelected {
+	border-width: calc(var(--borderWidth) * 2.0);
 }
 
 .weaponImg {
@@ -66,4 +76,8 @@
 	margin-bottom: 0;
 	float: right;
 }
- 
+
+.trashBtn {
+	float: right;
+	height: 100%;
+}
