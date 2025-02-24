@@ -1,0 +1,96 @@
+@import url('globals.css');
+@import url('inputs.css');
+@import url('foldElement.css');
+
+.screenGrid {
+	display: grid;
+
+	grid-template-areas:
+		'graph   mods'
+		'weapons mods';
+	grid-template-columns: 2fr 18em;
+	grid-template-rows: 2fr 1fr;
+	background-color: #0D313A;
+	padding: var(--spacing);
+	grid-gap: calc(var(--spacing) / 2.0);
+	height: 100vh;
+}
+
+.screenGrid > div {
+	background-color: rgba(255, 255, 255, 0.8);
+	padding: var(--spacing);
+	overflow: auto;
+}
+
+.screenGrid > div.graph {
+	grid-area: graph;
+	text-align: center;
+}
+
+.screenGrid > div.mods {
+	grid-area: mods;
+	padding: 0px;
+}
+
+.screenGrid > div.weapons {
+	grid-area: weapons;
+}
+
+.modsGrid {
+	display: grid;
+	
+	grid-template-areas:
+		'activeWeaponMods'
+		'globalMods';
+	grid-template-rows: auto 1fr;
+	height: 100%;
+	padding-left: var(--spacing);
+	padding-right: var(--spacing);
+	grid-gap: var(--spacing);
+}
+
+.modsGrid > div {
+	overflow: auto;
+}
+
+.modsGrid > div.activeWeaponMods {
+	grid-area: activeWeaponMods;
+}
+
+.modsGrid > div.globalMods {
+	grid-area: globalMods;
+}
+
+.weaponGrid {
+	display: grid;
+	
+	grid-template-areas:
+		'activeWeapons'
+		'weaponSelect';
+	grid-template-rows: 2fr 3fr;
+	grid-gap: var(--spacing);
+	height: 100%;
+}
+
+.weaponGrid > div {
+	padding: var(--spacing);
+	overflow: auto;
+}
+
+.weaponGrid > div.activeWeapons {
+	grid-area: activeWeapons;
+	border: 2px solid #0D313A;
+}
+
+.weaponGrid > div.weaponSelect {
+	grid-area: weaponSelect;
+	border: 2px solid #0D313A;
+}
+
+.weaponSelectGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, 7em);
+	grid-auto-rows: 3em;
+	grid-gap: var(--spacing);
+}
+

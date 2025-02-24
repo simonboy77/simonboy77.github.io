@@ -5,8 +5,7 @@ const ChartTypes = {
 	DAMAGE_PER_MAG:    3
 };
 
-function get_chart_title(type)
-{
+function get_chart_title(type) {
 	switch(type)
 	{
 		case ChartTypes.TTK_OVER_ACCURACY: { return 'TTK Over Accuracy'; } break;
@@ -130,8 +129,33 @@ const shieldOverlayDataset = [
 	}
 ];
 
-function chart_update_ttk_over_accuracy(chart, datasets, graphMods, shieldRarity)
-{
+function sort_bar_data(barData) {
+	let sorted = false;
+	while(!sorted) {
+		sorted = true;
+		for (let dataIndex = 0; dataIndex < (barData.datasets[0].data.length - 1); ++dataIndex) {
+			let value = barData.datasets[0].data[dataIndex];
+			let nextValue = barData.datasets[0].data[dataIndex + 1];
+			
+			if (value < nextValue) {
+				barData.datasets[0].data[dataIndex] = nextValue;
+				barData.datasets[0].data[dataIndex + 1] = value;
+				
+				let labelSwap = barData.labels[dataIndex];
+				barData.labels[dataIndex] = barData.labels[dataIndex + 1];
+				barData.labels[dataIndex + 1] = labelSwap;
+				
+				let colorSwap = barData.datasets[0].backgroundColor[dataIndex];
+				barData.datasets[0].backgroundColor[dataIndex] = barData.datasets[0].backgroundColor[dataIndex + 1];
+				barData.datasets[0].backgroundColor[dataIndex + 1] = colorSwap;
+				
+				sorted = false;
+			}
+		}
+	}
+}
+
+function chart_update_ttk_over_accuracy(chart, datasets, graphMods, shieldRarity) {
 	chart.data.datasets = datasets;
 	
 	ttkOverAccuracyOptions.scales.x.min = graphMods.minAccuracy;
@@ -144,8 +168,7 @@ function chart_update_ttk_over_accuracy(chart, datasets, graphMods, shieldRarity
 	chart.update();
 }
 
-function chart_update_damage_over_time(chart, datasets, graphMods)
-{
+function chart_update_damage_over_time(chart, datasets, graphMods) {
 	// todo: destroy previous dataset?
 	chart.data.datasets = datasets;
 	if(graphMods.showShields) {
@@ -160,25 +183,22 @@ function chart_update_damage_over_time(chart, datasets, graphMods)
 	chart.update();
 }
 
-function chart_update_damage_per_second(chart, data, graphMods)
-{
+function chart_update_damage_per_second(chart, data, graphMods) {
 	chart.data = data;
 	chart.update();
 }
 
-function chart_update_damage_per_mag(chart, data, graphMods, magRarity)
-{
+function chart_update_damage_per_mag(chart, data, graphMods, magRarity) {
 	chart.data = data;
 	
 	let title = get_chart_title(ChartTypes.DAMAGE_PER_MAG);
-	title += ' (' + get_rarity_name(magRarity) + ' Mag)';
+	title += ' (Default Mag: ' + get_rarity_name(magRarity) + ')';
 	damagePerMagOptions.plugins.title.text = title;
 	
 	chart.update();
 }
 
-function chart_create(chartMods)
-{
+function chart_create(chartMods) {
 	switch(chartMods.type)
 	{
 		case ChartTypes.TTK_OVER_ACCURACY: {
@@ -237,8 +257,7 @@ function chart_create(chartMods)
 	return 0;
 }
 
-function chart_change_type(chart, chartMods)
-{
+function chart_change_type(chart, chartMods) {
 	chart.destroy();
 	return chart_create(chartMods);
 }

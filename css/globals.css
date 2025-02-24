@@ -1,0 +1,45 @@
+:root {
+	--spacing: 0.5em;
+	--borderWidth: 2px;
+}
+
+@font-face {
+	font-family: apex-black;
+	src: url('../res/Apex_Black.ttf');
+}
+
+* {
+	box-sizing: border-box;
+	font-size: 1em;
+	font-family: sans-serif;
+	
+	/* Prevent text selection */
+	-webkit-user-select: none; /* Safari */
+	-ms-user-select: none; /* IE 10 and IE 11 */
+	user-select: none; /* Standard syntax */
+}
+
+h2 {
+	text-align: center;
+	font-family: apex-black;
+}
+
+h4 {
+	text-align: center;
+	font-family: apex-black;
+}
+
+input[type='range'] {
+	width: 100%;
+}
+
+.breakDiv {
+	height: var(--spacing);
+	clear: left;
+}
+
+.screen {
+	padding: 0;
+	margin: 0;
+}
+

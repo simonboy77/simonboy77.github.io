@@ -1,0 +1,69 @@
+.weaponBtn {
+	position: relative;
+	display: flex;
+	
+	justify-content: center;
+	align-items: center;
+	
+	width: 100%;
+	height: 100%;
+	
+	border: 2px solid var(--borderClr);
+	border-radius: 4px;
+}
+
+.weaponImg {
+	width: 100%;
+	height: 100%;
+  	padding: 1px 1px;
+  	
+  	/* to convert hex color to css filter: https://codepen.io/sosuke/pen/Pjoqqp */
+  	filter: invert(87%) sepia(0%) saturate(63%) hue-rotate(226deg) brightness(89%) contrast(91%);
+}
+
+.weaponTxt {
+	position: absolute;
+}
+
+.dropdown {
+	margin-top: var(--spacing);
+	margin-right: var(--spacing);
+	padding-top: 0;
+	width: 8em;
+	float: left;
+}
+
+.elementTitle {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.dropdownValue {
+	width: 100%;
+}
+
+.checkbox {
+	width: 12em;
+	float: left;
+}
+
+.slider {
+	margin-top: var(--spacing);
+	margin-right: var(--spacing);
+	padding-top: 0;
+	width: 14em;
+	float: left;
+}
+
+.sliderTitle {
+	margin-top: 0;
+	margin-bottom: 0;
+	float: left;
+}
+
+.sliderValue {
+	margin-top: 0;
+	margin-bottom: 0;
+	float: right;
+}
+ 

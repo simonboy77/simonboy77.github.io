@@ -1,0 +1,66 @@
+.foldBtn {
+	padding: var(--spacing);
+	background-color: #777777;
+	color: white;
+	cursor: pointer;
+	width: 100%;
+	border: none;
+	text-align: left;
+}
+
+.foldOpen, .foldBtn:hover {
+	background-color: #555555;
+}
+
+.foldBtn:after {
+	content: '\23F7'; /* arrow up */
+	color: white;
+	font-weight: bold;
+	float: right;
+}
+
+
+.foldOpen:after {
+	content: '\23F6'; /* arrow down */
+}
+
+
+.foldContent {	
+	margin-bottom: var(--spacing);
+	max-height: 0; /* javascript transition will take care of this */
+	padding-left: var(--spacing);
+	padding-right: var(--spacing);
+	overflow: hidden;
+	border-style: solid;
+	border-color: black;
+	border-width: 0px; /* javascript transition will take care of this */
+	border-radius: 0px 0px 8px 8px;
+}
+
+.displayHeader {
+	padding: var(--spacing);
+	margin-top: var(--spacing);
+	background-color: #555555;
+	color: white;
+	width: 100%;
+	border: none;
+	text-align: left;
+}
+
+.displayHeader:after {
+	content: '\2715'; /* cross */
+	color: white;
+	font-weight: bold;
+	float: right;
+}
+
+.displayContent {
+	padding-left: var(--spacing);
+	padding-right: var(--spacing);
+	max-height: 100%;
+	overflow: hidden;
+	border-style: solid;
+	border-color: black;
+	border-width: 0px var(--borderWidth) var(--borderWidth);
+	border-radius: 0px 0px 8px 8px;
+}

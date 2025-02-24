@@ -1,9 +1,8 @@
-// Variables
-let chart;
-let activeWeapons = []; // Contains ModdedWeapon objects
-let damageMods;
-let weaponMods;
-let chartMods;
+// Global weapon mods
+let globalMagSelect         = document.getElementById('input_globalMag');
+let globalStockSelect       = document.getElementById('input_globalStock');
+let globalBoltSelect        = document.getElementById('input_globalBolt');
+let globalTacReloadCheckbox = document.getElementById('input_globalTacReload');
 
 // Damage mods
 let shieldSelect      = document.getElementById('input_shield');
@@ -13,13 +12,6 @@ let legshotSlider     = document.getElementById('input_legshot');
 let fortifiedCheckbox = document.getElementById('input_fortified');
 let ampedCheckbox     = document.getElementById('input_amped');
 let markedCheckbox    = document.getElementById('input_marked');
-
-// Weapon mods
-let magSelect              = document.getElementById('input_mag');
-let stockSelect            = document.getElementById('input_stock');
-let boltSelect             = document.getElementById('input_bolt');
-let tacReloadCheckbox      = document.getElementById('input_tacReload');
-let splatterRoundsCheckbox = document.getElementById('input_splatterRounds');
 
 // Chart mods
 let chartSelect = document.getElementById('input_chartType');
@@ -37,161 +29,67 @@ let minAccuracyText = document.getElementById('minAccuracyText');
 let maxAccuracyText = document.getElementById('maxAccuracyText');
 let activeWeaponDiv = document.getElementById('activeWeapons');
 let weaponSelectDiv = document.getElementById('weaponSelect');
-let collapsibles = document.getElementsByClassName('collapsible');
+let awmDiv = document.getElementById('awmDiv');
+let globalModsDiv = document.getElementById('globalModsDiv');
+let borderWidth = window.getComputedStyle(document.body).getPropertyValue('--borderWidth');
 
-for (let collapseIndex = 0; collapseIndex < collapsibles.length; ++collapseIndex) {
-	collapsibles[collapseIndex].addEventListener('click', function() {
-		this.classList.toggle('active');
-		let content = this.nextElementSibling;
-		
-		if (content.style.maxHeight) {
-			content.style.maxHeight = null;
-		} else {
-			content.style.maxHeight = content.scrollHeight + "px";
-		}
-	});
-}
 
 function update_slider_text(slider, text, postFix = '') {
 	text.value = slider.value + postFix;
 }
 
-function sort_bar_data(barData)
-{
-	let sorted = false;
-	while(!sorted) {
-		sorted = true;
-		for (let dataIndex = 0; dataIndex < (barData.datasets[0].data.length - 1); ++dataIndex) {
-			let value = barData.datasets[0].data[dataIndex];
-			let nextValue = barData.datasets[0].data[dataIndex + 1];
-			
-			if (value < nextValue) {
-				barData.datasets[0].data[dataIndex] = nextValue;
-				barData.datasets[0].data[dataIndex + 1] = value;
-				
-				let labelSwap = barData.labels[dataIndex];
-				barData.labels[dataIndex] = barData.labels[dataIndex + 1];
-				barData.labels[dataIndex + 1] = labelSwap;
-				
-				let colorSwap = barData.datasets[0].backgroundColor[dataIndex];
-				barData.datasets[0].backgroundColor[dataIndex] = barData.datasets[0].backgroundColor[dataIndex + 1];
-				barData.datasets[0].backgroundColor[dataIndex + 1] = colorSwap;
-				
-				sorted = false;
+// Input handling
+globalMagSelect.oninput = function() {
+	globalWeaponMods.magRarity = Number(this.value);
+	
+	for(let aIndex = 0; aIndex < activeWeapons.length; ++aIndex) {
+		if(activeWeapons[aIndex].weaponMods.followGlobal) {
+			if(aIndex == selectedWeaponIndex) {
+				sw_follow_global(true);
+			} else {
+				activeWeapons[aIndex].weaponMods.magRarity = globalWeaponMods.magRarity;
 			}
 		}
 	}
-}
-
-function refresh_chart_ttk_over_accuracy()
-{
-	let weaponDatasets = [];
-	let oldAccuracy = damageMods.accuracy;
 	
-	for (let weaponIndex = 0; weaponIndex < activeWeapons.length; ++weaponIndex) {
-		let activeWeapon = activeWeapons[weaponIndex];
-		let weaponData = [];
-		
-		for (let accuracy = chartMods.minAccuracy; accuracy <= chartMods.maxAccuracy; accuracy += 1) {
-			damageMods.hitRate = accuracy / 100.0;
-			let ttk = activeWeapon.calc_ttk(damageMods);
-			weaponData.push({x:accuracy,y:ttk});
-		}
-		
-		weaponDatasets.push({
-			label: activeWeapon.get_name(),
-			data: weaponData,
-			borderColor: activeWeapon.color
-		});
-	}
-	
-	damageMods.accuracy = oldAccuracy;
-	let shieldRarity = Number(shieldSelect.value);
-	
-	chart_update_ttk_over_accuracy(chart, weaponDatasets, chartMods, shieldRarity);
-}
-
-function refresh_chart_damage_over_time()
-{
-	let weaponDatasets = [];
-	for(let weaponIndex = 0; weaponIndex < activeWeapons.length; ++weaponIndex) {
-		let activeWeapon = activeWeapons[weaponIndex];
-		weaponDatasets.push({
-			label: activeWeapon.get_name(),
-			data: activeWeapon.calc_dot(chartMods.seconds, damageMods),
-			borderColor: activeWeapon.color
-		});
-	}
-	
-	chart_update_damage_over_time(chart, weaponDatasets, chartMods);
-}
-
-function refresh_chart_damage_per_second()
-{
-	let weaponData = {
-		labels: [],
-		datasets: [{
-			label: 'Damage Per Second',
-			data: [],
-			backgroundColor: [],
-		}]
-	};
-	
-	for (let weaponIndex = 0; weaponIndex < activeWeapons.length; ++weaponIndex) {
-		let activeWeapon = activeWeapons[weaponIndex];
-		
-		weaponData.labels.push(activeWeapon.get_name());
-		weaponData.datasets[0].data.push(activeWeapon.calc_dps(damageMods));
-		weaponData.datasets[0].backgroundColor.push(activeWeapon.color);
-	}
-	
-	sort_bar_data(weaponData);
-	chart_update_damage_per_second(chart, weaponData, chartMods);
-}
-
-function refresh_chart_damage_per_mag()
-{
-	let weaponData = {
-		labels: [],
-		datasets: [{
-			label: 'Damage Per Mag',
-			data: [],
-			backgroundColor: [],
-		}]
-	};
-	
-	for (let weaponIndex = 0; weaponIndex < activeWeapons.length; ++weaponIndex) {
-		let activeWeapon = activeWeapons[weaponIndex];
-		
-		weaponData.labels.push(activeWeapon.get_name());
-		weaponData.datasets[0].data.push(activeWeapon.calc_dpm(damageMods));
-		weaponData.datasets[0].backgroundColor.push(activeWeapon.color);
-	}
-	
-	sort_bar_data(weaponData);
-	chart_update_damage_per_mag(chart, weaponData, chartMods, weaponMods.magRarity);
-}
-
-function refresh_chart()
-{
-	switch(chartMods.type)
-	{
-		case ChartTypes.TTK_OVER_ACCURACY: { refresh_chart_ttk_over_accuracy(); } break;
-		case ChartTypes.DAMAGE_OVER_TIME:  { refresh_chart_damage_over_time(); } break;
-		case ChartTypes.DAMAGE_PER_SECOND: { refresh_chart_damage_per_second(); } break;
-		case ChartTypes.DAMAGE_PER_MAG:    { refresh_chart_damage_per_mag(); } break;
-	}
-}
-
-function show_and_hide() {
-	// TODO: show and hide elements based on the chart type
-}
-
-function change_chart_type(type) {
-	chartMods.type = type;
-	chart = chart_change_type(chart, chartMods);
 	refresh_chart();
-	show_and_hide();
+}
+
+globalStockSelect.oninput = function() {
+	globalWeaponMods.stockRarity = Number(this.value);
+	
+	for(let aIndex = 0; aIndex < activeWeapons.length; ++aIndex) {
+		if(activeWeapons[aIndex].weaponMods.followGlobal) {
+			if(aIndex == selectedWeaponIndex) {
+				sw_follow_global(true);
+			} else {
+				activeWeapons[aIndex].weaponMods.stockRarity = globalWeaponMods.stockRarity;
+			}
+		}
+	}
+	
+	refresh_chart();
+}
+
+globalBoltSelect.oninput = function() {
+	globalWeaponMods.boltRarity = Number(this.value);
+	
+	for(let aIndex = 0; aIndex < activeWeapons.length; ++aIndex) {
+		if(activeWeapons[aIndex].weaponMods.followGlobal) {
+			if(aIndex == selectedWeaponIndex) {
+				sw_follow_global(true);
+			} else {
+				activeWeapons[aIndex].weaponMods.boltRarity = globalWeaponMods.boltRarity;
+			}
+		}
+	}
+	
+	refresh_chart();
+}
+
+globalTacReloadCheckbox.oninput = function() {
+	globalWeaponMods.tacReload = this.checked;
+	refresh_chart();
 }
 
 shieldSelect.oninput = function() {
@@ -206,8 +104,7 @@ accuracySlider.oninput = function() {
 	refresh_chart();
 }
 
-headshotSlider.oninput = function()
-{
+headshotSlider.oninput = function() {
 	update_slider_text(this, headshotText, '%');
 	damageMods.headshotRate = Number(this.value) / 100.0;
 	
@@ -220,8 +117,7 @@ headshotSlider.oninput = function()
 	refresh_chart();
 }
 
-legshotSlider.oninput = function()
-{
+legshotSlider.oninput = function() {
 	update_slider_text(this, legshotText, '%');
 	damageMods.legshotRate = Number(this.value) / 100.0;
 	
@@ -234,41 +130,18 @@ legshotSlider.oninput = function()
 	refresh_chart();
 }
 
-fortifiedCheckbox.oninput = function()
-{
+fortifiedCheckbox.oninput = function() {
 	damageMods.fortified = this.checked;
 	refresh_chart();
 }
 
-ampedCheckbox.oninput = function()
-{
+ampedCheckbox.oninput = function() {
 	damageMods.amped = this.checked;
 	refresh_chart();
 }
 
-markedCheckbox.oninput = function()
-{
+markedCheckbox.oninput = function() {
 	damageMods.marked = this.checked;
-	refresh_chart();
-}
-
-magSelect.oninput = function() {
-	weaponMods.magRarity = Number(this.value);
-	refresh_chart();
-}
-
-stockSelect.oninput = function() {
-	weaponMods.stockRarity = Number(this.value);
-	refresh_chart();
-}
-
-boltSelect.oninput = function() {
-	weaponMods.shotgunBoltRarity = Number(this.value);
-	refresh_chart();
-}
-
-tacReloadCheckbox.oninput = function() {
-	weaponMods.tacReload = this.checked;
 	refresh_chart();
 }
 
@@ -313,55 +186,33 @@ maxAccuracySlider.oninput = function() {
 	refresh_chart();
 }
 
-function add_weapon(weaponIndex)
-{
-	if(weaponIndex >= weapons_S24.length) {
-		console.warn('weaponIndex (' + weaponIndex + 'outside list (' + weapons_S24.length +')');
-		return;
-	}
-	
-	// TODO: copying is probably important here i think (Object.assign())
-	let weapon = weapons_S24[weaponIndex];
-	let activeIndex = activeWeapons.length;
-	activeWeapons.push(new ModdedWeapon(weapon, weaponMods));
-	refresh_chart();
-	
-	let activeWeapon = activeWeapons[activeIndex];
-	let html = '<button class=\'weaponBtn\' style=\'--borderClr: ' + activeWeapon.color + ';\' id=activeWeapon' + activeIndex + '  onclick=remove_weapon(' + activeIndex + ')>';
-	html +=			'<img class=\'weaponImg\' src=\'res/icons/' + weapon.name + '.svg\'/>';
-	html +=			'<p class=\'weaponTxt\'>' + weapon.name + '</p>';
-	html +=		'</button>\n';
-	
-	activeWeaponDiv.innerHTML += html;
+function show_and_hide() {
+	// TODO: show and hide elements based on the chart type
 }
 
-function remove_weapon(activeIndex)
-{
-	if(activeIndex >= activeWeapons.length) {
-		console.warn('activeIndex (' + activeIndex + 'outside list (' + activeWeapons.length +')');
-		return;
+function folding() {
+	this.classList.toggle('foldOpen');	
+	let content = this.nextElementSibling;
+	
+	if (content.style.maxHeight) {
+		content.style.transition = 'max-height 0.2s ease-out, border-width 0s 0.2s';
+		content.style.maxHeight = null;
+		content.style.borderWidth = '0px';
+	} else {
+		content.style.transition = 'max-height 0.2s ease-out';
+		content.style.maxHeight =  content.scrollHeight + 'px';
+		content.style.borderWidth = '0px ' + borderWidth + ' ' + borderWidth;
 	}
-	
-	// Remove button from html
-	let weaponBtn = document.getElementById('activeWeapon' + activeIndex);
-	weaponBtn.remove();
-	
-	// Decrement remaining buttons with id above removed id
-	for(let aIndex = (activeIndex + 1); aIndex < activeWeapons.length; ++aIndex) {
-		let otherBtn = document.getElementById('activeWeapon' + aIndex);
-		
-		otherBtn.setAttribute('onclick', 'remove_weapon(' + (aIndex - 1) + ')');
-		otherBtn.setAttribute('id', 'activeWeapon' + (aIndex - 1));
-	}
-	
-	// Remove weapon from activeWeapons
-	activeWeapons.splice(activeIndex, 1);
-	refresh_chart();
 }
 
-function setup_page()
-{
+function page_setup() {
 	show_and_hide();
+	
+	// Setup folding buttons
+	let foldBtns = document.getElementsByClassName('foldBtn');
+	for (let foldBtnIndex = 0; foldBtnIndex < foldBtns.length; ++foldBtnIndex) {
+		foldBtns[foldBtnIndex].addEventListener('click', folding);
+	}
 	
 	update_slider_text(accuracySlider, accuracyText, '%');
 	update_slider_text(headshotSlider, headshotText, '%');
@@ -371,8 +222,6 @@ function setup_page()
 	update_slider_text(maxAccuracySlider, maxAccuracyText, '%');
 	
 	// Damage mods
-	let test = shieldSelect.value;
-	
 	let shield = get_shield_health(Number(shieldSelect.value));
 	let health = 100;
 	let hitRate = Number(accuracySlider.value) / 100.0;
@@ -384,41 +233,17 @@ function setup_page()
 	
 	damageMods = new DamageModifiers(shield, health, hitRate, headshotRate, legshotRate, fortified, amped, marked);
 	
-	// Weapon mods
-	let magRarity = Number(magSelect.value);
-	let stockRarity = Number(stockSelect.value);
-	let shotgunBoltRarity = Number(boltSelect.value);
-	let tacReload = tacReloadCheckbox.checked;
+	// Global weapon mods
+	let magRarity = Number(globalMagSelect.value);
+	let stockRarity = Number(globalStockSelect.value);
+	let boltRarity = Number(globalBoltSelect.value);
+	let hopUp = 0;
+	let tacReload = globalTacReloadCheckbox.checked;
 	let ampReload = false;
-	let splatterRounds = splatterRoundsCheckbox.checked;
 	
-	weaponMods = new WeaponModifiers(magRarity, stockRarity, shotgunBoltRarity, tacReload, ampReload, splatterRounds);
+	globalWeaponMods = new WeaponModifiers(magRarity, stockRarity, boltRarity, hopUp, tacReload, ampReload, true);
 	
-	// Chart mods
-	let canvasId = 'statChart';
-	let chartType = Number(chartSelect.value);
-	let seconds = Number(secondsSlider.value);
-	let showShields = showShieldsCheckbox.checked;
-	let minAccuracy = Number(minAccuracySlider.value);
-	let maxAccuracy = Number(maxAccuracySlider.value);
-	
-	chartMods = new ChartModifiers(canvasId, chartType, seconds, showShields, minAccuracy, maxAccuracy);
-	
-	// Populate weapon-select
-	weaponSelectDiv.innerHTML = ''; // Clear
-	for(let weaponIndex = 0; weaponIndex < weapons_S24.length; ++weaponIndex) {
-		let weapon = weapons_S24[weaponIndex];
-		
-		let html = '<button class=\'weaponBtn\' style=\'--borderClr: ' + clrBorder + ';\'  onclick=add_weapon(' + weaponIndex + ')>';
-		html +=			'<img class=\'weaponImg\' src=\'res/icons/' + weapon.name + '.svg\'/>';
-		html +=			'<p class=\'weaponTxt\'>' + weapon.name + '</p>';
-		html +=		'</button>\n';
-		
-		weaponSelectDiv.innerHTML += html;
-	}
-	
-	chart = chart_create(chartMods);
-	refresh_chart();
+	page_setup_charts();
+	page_setup_weapons();
 }
-
 
