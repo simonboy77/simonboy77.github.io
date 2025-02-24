@@ -5,7 +5,7 @@
 // 'followGlobal', which is used for individual changes to weapon mods
 
 class Weapon {
-	constructor(name, bd, hm, lm, rps, mNone, mCommon, mRare, mEpic, rf, rt) {
+	constructor(name, bd, hm, lm, rps, mNone, mCommon, mRare, mEpic, rf, rt, cptA, cptH) {
 		this.name = name;
 		this.bodyDamage = bd; this.headshotMultiplier = hm; this.legshotMultiplier = lm;
 		
@@ -17,6 +17,8 @@ class Weapon {
 		this.magSizeRare = mRare; this.magSizeEpic = mEpic;
 		
 		this.reloadTimeFull = rf; this.reloadTimeTac   = rt;
+		this.compatibleAttachments = cptA;
+		this.compatibleHopUps = cptH; 
 	}
 	
 	get_rounds_per_second(weaponMods) {
@@ -27,7 +29,7 @@ class Weapon {
 		return (1.0 / this.get_rounds_per_second(weaponMods));
 	}
 	
-	get_mag_size(weaponMods, onlyBase = false) {
+	get_bullet_count_from_mag_rarity(weaponMods) {
 		let magSize = this.magSizeNone;
 		
 		switch(weaponMods.magRarity) {
@@ -38,11 +40,11 @@ class Weapon {
 			case Rarity.MYTHIC: { magSize = this.magSizeEpic; } break;
 		}
 		
-		if(!onlyBase) {
-			if(weaponMods.tacReload) { magSize -= 1; }
-		}
-		
 		return magSize;
+	}
+	
+	get_mag_size(weaponMods, onlyBase = false) {
+		return calc_mag_size_auto(this, weaponMods, onlyBase);
 	}
 	
 	get_reload_time(weaponMods) {
@@ -127,100 +129,37 @@ class Weapon {
 		return true;
 	}
 	
-	get_fire_time_per_mag(weaponMods) {
-		let totalMagSize = this.get_mag_size(weaponMods);
-		let secondsPerRound = this.get_seconds_per_round(weaponMods);
-		
-		return secondsPerRound * (totalMagSize - 1); // first bullet is instant
+	calc_fire_time_per_mag(weaponMods) {
+		return calc_fire_time_per_mag_auto(this, weaponMods);
 	}
 	
 	calc_dpm(damageMods, weaponMods, onlyBase = false) {
-		let totalMagSize = this.get_mag_size(weaponMods, onlyBase);		
-		let averageDamage = this.get_average_damage_per_shot(damageMods);
-		
-		return totalMagSize * averageDamage;
+		return calc_dpm_general(this, damageMods, weaponMods, onlyBase);
 	}
 	
 	calc_dot(seconds, damageMods, weaponMods) {
-		const data = [];
-		
-		if (!this.validate_weapon(weaponMods)) { return data; }
-		if (seconds <= 0.0) {
-			console.warn('invalid seconds :', seconds);
-			return data;
-		}
-		
-		let totalMagSize = this.get_mag_size(weaponMods);		
-		let averageDamage = this.get_average_damage_per_shot(damageMods);
-		let secondsPerRound = this.get_seconds_per_round(weaponMods);
-		let reloadTime = this.get_reload_time(weaponMods);
-		
-		let totalDamage = 0.0;
-		let secondsPassed = 0.0;
-		let curMag = totalMagSize;
-		
-		while (secondsPassed < seconds) {
-			curMag -= 1;
-			totalDamage += averageDamage;
-			data.push({x:secondsPassed,y:totalDamage});
-			
-			if(curMag > 0) {
-				secondsPassed += secondsPerRound;
-			}
-			else {
-				curMag = totalMagSize;
-				secondsPassed += reloadTime;
-				
-				if(secondsPassed > seconds) { secondsPassed = seconds; }
-				data.push({x:secondsPassed,y:totalDamage});
-			}
-		}
-		
-		return data;
+		return calc_dot_auto(this, seconds, damageMods, weaponMods);
 	}
 	
 	calc_ttk(damageMods, weaponMods) {
-		if (!this.validate_weapon(weaponMods)) { return 0.0; }
-		
-		let totalMagSize = this.get_mag_size(weaponMods);		
-		let averageDamage = this.get_average_damage_per_shot(damageMods);
-		let averageDamagePerMag = this.calc_dpm(damageMods, weaponMods);
-		
-		let reloadTime = this.get_reload_time(weaponMods);
-		let fireTime = this.get_fire_time_per_mag(weaponMods);
-		
-		let targetHP = damageMods.shield + damageMods.health;
-		let secondsPassed = 0.0;
-		
-		while(targetHP >= averageDamagePerMag) {
-			targetHP -= averageDamagePerMag;
-			secondsPassed += (fireTime + reloadTime);
-		}
-		
-		let finalRounds = Math.ceil(targetHP / averageDamage);
-		let secondsPerRound = this.get_seconds_per_round(weaponMods);
-		
-		secondsPassed += secondsPerRound * (finalRounds - 1); // first bullet is instant
-		
-		return secondsPassed;
+		return calc_ttk_auto(this, damageMods, weaponMods);
 	}
 	
 	calc_dps(damageMods, weaponMods) {
-		if (!this.validate_weapon(weaponMods)) { return 0.0; }
-		
-		let damage = this.get_average_damage_per_shot(damageMods);
-		let dps = damage * this.get_rounds_per_second(weaponMods);
-		
-		return dps;
+		return calc_dps_auto(this, damageMods, weaponMods);
 	}
 }
 
 class Burst extends Weapon {
-	constructor(name, bd, hm, lm, rps, mNone, mCommon, mRare, mEpic, rf, rt, brs, brd) {
-		super(name, bd, hm, lm, rps, mNone, mCommon, mRare, mEpic, rf, rt);
+	constructor(name, bd, hm, lm, rps, mNone, mCommon, mRare, mEpic, rf, rt, brs, brd, cptA, cptH) {
+		super(name, bd, hm, lm, rps, mNone, mCommon, mRare, mEpic, rf, rt, cptA, cptH);
 		
 		this.burstSize = brs;
 		this.burstDelay = brd;
+	}
+	
+	get_mag_size(weaponMods, onlyBase = false) {
+		return calc_mag_size_burst(this, weaponMods, onlyBase);
 	}
 	
 	get_average_damage_per_burst(damageMods) {
@@ -231,105 +170,85 @@ class Burst extends Weapon {
 		return ((this.burstSize * this.get_seconds_per_round(weaponMods)) + this.burstDelay);
 	}
 	
+	calc_fire_time_per_mag(weaponMods) {
+		return calc_fire_time_per_mag_burst(this, weaponMods);
+	}
+	
 	calc_dot(seconds, damageMods, weaponMods) {
-		const data = [];
-		
-		if (!this.validate_weapon(weaponMods)) { return data; }
-		if (seconds <= 0.0) {
-			console.warn('invalid seconds :', seconds);
-			return data;
-		}
-		
-		let totalMagSize = this.get_mag_size(weaponMods);		
-		let averageDamage = this.get_average_damage_per_shot(damageMods);
-		let secondsPerRound = this.get_seconds_per_round(weaponMods);
-		let reloadTime = this.get_reload_time(weaponMods);
-		
-		let totalDamage = 0.0;
-		let secondsPassed = 0.0;
-		let curMag = totalMagSize;
-		let curBurst = this.burstSize;
-		
-		while (secondsPassed < seconds) {
-			--curMag;
-			--curBurst;
-			
-			totalDamage += averageDamage;
-			data.push({x:secondsPassed,y:totalDamage});
-			
-			if(curMag > 0) {
-				if(curBurst > 0) {
-					secondsPassed += secondsPerRound;
-				}
-				else {
-					curBurst = this.burstSize;
-					secondsPassed += this.burstDelay;
-					
-					if(secondsPassed > seconds) { secondsPassed = seconds; }
-					data.push({x:secondsPassed,y:totalDamage});
-				}	
-			}
-			else {
-				curMag = totalMagSize;
-				secondsPassed += reloadTime;
-				
-				if(secondsPassed > seconds) { secondsPassed = seconds; }
-				data.push({x:secondsPassed,y:totalDamage});
-			}
-		}
-		
-		return data;
+		return calc_dot_burst(this, seconds, damageMods, weaponMods);
 	}
 	
 	calc_ttk(damageMods, weaponMods) {
-		if (!this.validate_weapon(weaponMods)) { return 0.0; }
-		
-		let totalMagSize = this.get_mag_size(weaponMods);		
-		let averageDamage = this.get_average_damage_per_shot(damageMods);
-		let averageDamagePerBurst = this.get_average_damage_per_burst(damageMods);
-		let averageDamagePerMag = this.calc_dpm(damageMods, weaponMods);
-		
-		let reloadTime = this.get_reload_time(weaponMods);
-		let fireTime = this.get_fire_time_per_mag(weaponMods);
-		
-		let targetHP = damageMods.shield + damageMods.health;
-		let secondsPassed = 0.0;
-		
-		while(targetHP >= averageDamagePerMag) {
-			targetHP -= averageDamagePerMag;
-			secondsPassed += (fireTime + reloadTime);
-		}
-		
-		// Apply final bursts
-		let finalBursts = Math.floor(targetHP / averageDamagePerBurst);
-		let spBurst = this.get_seconds_per_burst(weaponMods);
-		
-		secondsPassed += spBurst * finalBursts;
-		targetHP -= averageDamagePerBurst * finalBursts;
-		
-		// Apply final rounds
-		let finalRounds = Math.ceil(targetHP / averageDamage);
-		let spRound = this.get_seconds_per_round(weaponMods);
-		
-		secondsPassed += spRound * (finalRounds - 1); // first bullet is instant
-		
-		return secondsPassed;
+		return calc_ttk_burst(this, damageMods, weaponMods);
 	}
 	
 	calc_dps(damageMods, weaponMods) {
-		if (!this.validate_weapon(weaponMods)) { return 0.0; }
+		return calc_dps_burst(this, damageMods, weaponMods);
+	}
+}
+
+class Prowler extends Burst {
+	constructor(name, bd, hm, lm, rpsB, rpsA, mNone, mCommon, mRare, mEpic, 
+				rf, rt, brs, brd, cptA, cptH) {
+		super(name, bd, hm, lm, rpsB, mNone, mCommon, mRare, mEpic, rf, rt, brs, brd, cptA, cptH);
 		
-		let dpBurst = this.get_average_damage_per_burst(damageMods);
-		let spBurst = this.get_seconds_per_burst(weaponMods);
-		let dps = dpBurst / spBurst;
-		
-		return dps;
+		this.baseRoundsPerSecondAuto = rpsA;
+		this.baseRoundsPerMinuteAuto = this.baseRoundsPerSecondAuto * 60.0;
+		this.baseSecondsPerRoundAuto = 1.0 / this.baseRoundsPerSecondAuto;
+	}
+	
+	get_rounds_per_second(weaponMods) {
+		if(weaponMods.hopUp & HopUp.SELECTFIRE) {
+			return this.baseRoundsPerSecondAuto;
+		} else {
+			return this.baseRoundsPerSecond;
+		}
+	}
+	
+	get_mag_size(weaponMods, onlyBase = false) {
+		if(weaponMods.hopUp & HopUp.SELECTFIRE) {
+			return calc_mag_size_auto(this, weaponMods, onlyBase);
+		} else {
+			return calc_mag_size_burst(this, weaponMods, onlyBase);
+		}
+	}
+	
+	calc_fire_time_per_mag(weaponMods) {
+		if(weaponMods.hopUp & HopUp.SELECTFIRE) {
+			return calc_fire_time_per_mag_auto(this, weaponMods);
+		} else {
+			return calc_fire_time_per_mag_burst(this, weaponMods);
+		}
+	}
+	
+	calc_dot(seconds, damageMods, weaponMods) {
+		if(weaponMods.hopUp & HopUp.SELECTFIRE) {
+			return calc_dot_auto(this, seconds, damageMods, weaponMods);
+		} else {
+			return calc_dot_burst(this, seconds, damageMods, weaponMods);
+		}
+	}
+	
+	calc_ttk(damageMods, weaponMods) {
+		if(weaponMods.hopUp & HopUp.SELECTFIRE) {
+			return calc_ttk_auto(this, damageMods, weaponMods);
+		} else {
+			return calc_ttk_burst(this, damageMods, weaponMods);
+		}
+	}
+	
+	calc_dps(damageMods, weaponMods) {
+		if(weaponMods.hopUp & HopUp.SELECTFIRE) {
+			return calc_dps_auto(this, damageMods, weaponMods);
+		} else {
+			return calc_dps_burst(this, damageMods, weaponMods);
+		}
 	}
 }
 
 class Scatter extends Weapon {
-	constructor(name, bd, hm, lm, rps, mNone, mCommon, mRare, mEpic, rf, rt, pc) {
-		super(name, bd, hm, lm, rps, mNone, mCommon, mRare, mEpic, rf, rt);
+	constructor(name, bd, hm, lm, rps, mNone, mCommon, mRare, mEpic, rf, rt, pc, cptA, cptH) {
+		super(name, bd, hm, lm, rps, mNone, mCommon, mRare, mEpic, rf, rt, cptA, cptH);
 		this.projectileCount = pc;
 	}
 	
@@ -340,8 +259,8 @@ class Scatter extends Weapon {
 }
 
 class Shotgun extends Scatter {
-	constructor(name, bd, hm, lm, rps, mNone, rf, rt, pc) {
-		super(name, bd, hm, lm, rps, mNone, mNone, mNone, mNone, rf, rt, pc);
+	constructor(name, bd, hm, lm, rps, mNone, rf, rt, pc, cptA, cptH) {
+		super(name, bd, hm, lm, rps, mNone, mNone, mNone, mNone, rf, rt, pc, cptA, cptH);
 	}
 	
 	get_rounds_per_second(weaponMods) {
@@ -402,33 +321,50 @@ class ModdedWeapon {
 
 const weapons_S24 = [
 	// Havoc
-	new Weapon('Flatline', 19.0, 1.3, 0.75, 10.0, 19, 23, 27, 29, 3.1, 2.4),
-	new Burst('Hemlok', 20.0, 1.3, 0.75, 15.5, 18, 21, 24, 30, 2.85, 2.4, 3, 0.3), 
-	new Weapon('R-301', 14.0, 1.3, 0.75, 13.5, 21, 23, 28, 31, 3.2, 2.4),
+	new Weapon('Flatline', 19.0, 1.3, 0.75, 10.0, 19, 23, 27, 29, 3.1, 2.4,
+				Attachment.MAG | Attachment.STOCK, HopUp.SPLATTER),
+	new Burst('Hemlok', 20.0, 1.3, 0.75, 15.5, 18, 21, 24, 30, 2.85, 2.4, 3, 0.3,
+				Attachment.MAG | Attachment.STOCK, HopUp.BOOSTED_LOADER | HopUp.SPLATTER), 
+	new Weapon('R-301', 14.0, 1.3, 0.75, 13.5, 21, 23, 28, 31, 3.2, 2.4,
+				Attachment.MAG | Attachment.STOCK, HopUp.SPLATTER),
 	// Nemesis
-	new Weapon('Alternator', 18.0, 1.2, 0.8, 10.0, 19, 23, 26, 28, 2.23, 1.9),
-	new Burst('Prowler', 16.0, 1.2, 0.8, 21.0, 20, 25, 30, 35, 2.6, 2.0, 5, 0.28),
-	new Weapon('R-99', 13.0, 1.2, 0.8, 18.0, 17, 20, 23, 26, 2.45, 1.8),
-	new Weapon('Volt', 16.0, 1.25, 0.8, 12.0, 19, 21, 23, 26, 2.03, 1.44),
-	new Weapon('C.A.R.', 14.0, 1.25, 0.8, 15.4, 19, 22, 24, 27, 2.13, 1.7),
+	new Weapon('Alternator', 18.0, 1.2, 0.8, 10.0, 19, 23, 26, 28, 2.23, 1.9,
+				Attachment.MAG | Attachment.STOCK, 0),
+	new Prowler('Prowler', 16.0, 1.2, 0.8, 21.0, 13.25, 20, 25, 30, 35, 2.6, 2.0, 5, 0.28,
+				Attachment.MAG | Attachment.STOCK, HopUp.SELECTFIRE | HopUp.SPLATTER),
+	new Weapon('R-99', 13.0, 1.2, 0.8, 18.0, 17, 20, 23, 26, 2.45, 1.8,
+				Attachment.MAG | Attachment.STOCK, HopUp.SPLATTER),
+	new Weapon('Volt', 16.0, 1.25, 0.8, 12.0, 19, 21, 23, 26, 2.03, 1.44,
+				Attachment.MAG | Attachment.STOCK, 0),
+	new Weapon('C.A.R.', 14.0, 1.25, 0.8, 15.4, 19, 22, 24, 27, 2.13, 1.7,
+				Attachment.MAG | Attachment.STOCK, 0),
 	// Devotion
 	// L-STAR
-	new Weapon('Spitfire', 21.0, 1.25, 0.85, 9.0, 35, 40, 45, 50, 4.2, 3.4),
+	new Weapon('Spitfire', 21.0, 1.25, 0.85, 9.0, 35, 40, 45, 50, 4.2, 3.4,
+				Attachment.MAG | Attachment.STOCK, HopUp.SPLATTER),
 	// Rampage
-	new Weapon('Scout', 35.0, 1.6, 0.75, 3.9, 10, 15, 18, 20, 3.0, 2.4),
-	new Scatter('Triple_Take', 22.0, 1.6, 0.9, 1.45, 6, 7, 8, 10, 3.4, 2.6, 3),
+	new Weapon('Scout', 35.0, 1.6, 0.75, 3.9, 10, 15, 18, 20, 3.0, 2.4,
+				Attachment.MAG | Attachment.STOCK, 0),
+	new Scatter('Triple_Take', 22.0, 1.6, 0.9, 1.45, 6, 7, 8, 10, 3.4, 2.6, 3,
+				Attachment.MAG | Attachment.STOCK, HopUp.BOOSTED_LOADER),
 	// 30-30
 	// Bocek
 	// Charge_Rifle
-	new Weapon('Longbow', 60.0, 2.25, 0.9, 1.3, 6, 8, 10, 12, 3.66, 2.66),
+	new Weapon('Longbow', 60.0, 2.25, 0.9, 1.3, 6, 8, 10, 12, 3.66, 2.66,
+				Attachment.MAG | Attachment.STOCK, HopUp.SPLATTER),
 	//new Burst('Kraber')
 	// Sentinel
-	new Shotgun('EVA-8', 7.0, 1.25, 1.0, 2.6, 8, 3.0, 2.75, 8),
+	new Shotgun('EVA-8', 7.0, 1.25, 1.0, 2.6, 8, 3.0, 2.75, 8,
+				Attachment.STOCK | Attachment.BOLT, HopUp.BOOSTED_LOADER | HopUp.SPLATTER),
 	// Mastiff
-	new Shotgun('Mozambique', 15.0, 1.25, 1.0, 2.66, 5, 2.6, 2.1, 3),
+	new Shotgun('Mozambique', 15.0, 1.25, 1.0, 2.66, 5, 2.6, 2.1, 3,
+				Attachment.BOLT, HopUp.SPLATTER),
 	// Peacekeeper
-	new Weapon('RE-45', 14.0, 1.5, 0.9, 13.0, 18, 20, 23, 26, 1.95, 1.5),
-	new Weapon('P2020', 24.0, 1.25, 0.9, 7.0, 10, 11, 12, 14, 1.25, 1.25),
-	new Weapon('Wingman', 48.0, 1.5, 0.9, 2.6, 5, 6, 7, 8, 2.1, 2.1)
+	new Weapon('RE-45', 14.0, 1.5, 0.9, 13.0, 18, 20, 23, 26, 1.95, 1.5,
+				Attachment.MAG, HopUp.SPLATTER),
+	new Weapon('P2020', 24.0, 1.25, 0.9, 7.0, 10, 11, 12, 14, 1.25, 1.25,
+				Attachment.MAG, HopUp.SPLATTER),
+	new Weapon('Wingman', 48.0, 1.5, 0.9, 2.6, 5, 6, 7, 8, 2.1, 2.1,
+				Attachment.MAG, HopUp.BOOSTED_LOADER | HopUp.SPLATTER)
 ];
 

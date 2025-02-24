@@ -12,14 +12,55 @@ let magSelect = document.getElementById('input_mag');
 let stockSelect = document.getElementById('input_stock');
 let boltSelect = document.getElementById('input_bolt');
 let tacReloadCheckbox = document.getElementById('input_tacReload');
+let hopUpSelect = document.getElementById('input_hopUp');
 
 // Misc
 let awmHeader = document.getElementById('awmHeader');
 let awmContent = document.getElementById('awmContent');
-let btnColor = window.getComputedStyle(document.body).getPropertyValue('--white');
-let btnColorHover = window.getComputedStyle(document.body).getPropertyValue('--whiteHover');
+let awmMagDiv = document.getElementById('awmMagDiv');
+let awmStockDiv = document.getElementById('awmStockDiv');
+let awmBoltDiv = document.getElementById('awmBoltDiv');
+let awmTacReloadDiv = document.getElementById('awmTacReloadDiv');
+let awmHopUpDiv = document.getElementById('awmHopUpDiv');
 
 // Weapon handling
+function validate_index() {
+	if(selectedWeaponIndex < 0) {
+		console.warn('No weapon selected, this input should not be visible!');
+		return false;
+	}
+	else if(selectedWeaponIndex >= activeWeapons.length) {
+		console.warn('Weapon index out of range! ' + selectedWeaponIndex);
+		return false;
+	}
+	
+	return true;
+}
+
+function disable_element(element) {
+	element.disabled = true;
+	element.classList.add('inactive');
+	
+	const children = element.getElementsByTagName('*');
+	for(let childIndex = 0; childIndex < children.length; ++childIndex) {
+		let child = children[childIndex];
+		child.disabled = true;
+		child.classList.add('inactive');
+	}
+}
+
+function enable_element(element) {
+	element.disabled = false;
+	element.classList.remove('inactive');
+	
+	const children = element.getElementsByTagName('*');
+	for(let childIndex = 0; childIndex < children.length; ++childIndex) {
+		let child = children[childIndex];
+		child.disabled = false;
+		child.classList.remove('inactive');
+	}
+}
+
 function sw_follow_global(follow) {
 	if(!validate_index()) { return; }
 	
@@ -27,18 +68,21 @@ function sw_follow_global(follow) {
 	selectedWeapon.weaponMods.followGlobal = follow;
 	
 	if(selectedWeapon.weaponMods.followGlobal) {
-		selectedWeapon.weaponMods.magRarity = globalWeaponMods.magRarity;
-		selectedWeapon.weaponMods.stockRarity = globalWeaponMods.stockRarity;
-		selectedWeapon.weaponMods.boltRarity = globalWeaponMods.boltRarity;
-		selectedWeapon.weaponMods.tacReload = globalWeaponMods.tacReload;
+		magSelect.value = selectedWeapon.weaponMods.magRarity = globalWeaponMods.magRarity;
+		stockSelect.value = selectedWeapon.weaponMods.stockRarity = globalWeaponMods.stockRarity;
+		boltSelect.value = selectedWeapon.weaponMods.boltRarity = globalWeaponMods.boltRarity;
+		tacReloadCheckbox.checked = selectedWeapon.weaponMods.tacReload = globalWeaponMods.tacReload;
 	}
 	
 	followGlobalCheckbox.checked = follow;
-	magSelect.disabled = follow; magSelect.value = selectedWeapon.weaponMods.magRarity;
-	stockSelect.disabled = follow; stockSelect.value = selectedWeapon.weaponMods.stockRarity;
-	boltSelect.disabled = follow; boltSelect.value = selectedWeapon.weaponMods.boltRarity;
-	tacReloadCheckbox.disabled = follow;
-	tacReloadCheckbox.checked = selectedWeapon.weaponMods.tacReload;
+	
+	if(follow) {
+		disable_element(awmMagDiv); disable_element(awmStockDiv);
+		disable_element(awmBoltDiv); disable_element(awmTacReloadDiv);
+	} else {
+		enable_element(awmMagDiv); enable_element(awmStockDiv);
+		enable_element(awmBoltDiv); enable_element(awmTacReloadDiv);
+	}
 }
 
 function add_weapon(weaponIndex) {
@@ -79,19 +123,34 @@ function select_weapon(activeIndex) {
 		sw_follow_global(activeWeapons[selectedWeaponIndex].weaponMods.followGlobal);
 		
 		let activeWeapon = activeWeapons[activeIndex];
+		let attachmentComp = activeWeapon.weapon.compatibleAttachments;
+		let hopUpComp = activeWeapon.weapon.compatibleHopUps;
+		
+		hopUpSelect.value = activeWeapon.weaponMods.hopUp;
+		
 		awmHeader.innerHTML = activeWeapon.get_name() + ' Modifications';
 		awmHeader.style.backgroundColor = activeWeapon.color;
 		awmContent.style.borderColor = activeWeapon.color;
-		awmDiv.style.display = 'initial';
+		
+		awmMagDiv.style.display = (attachmentComp & Attachment.MAG) ? 'initial' : 'none';
+		awmStockDiv.style.display = (attachmentComp & Attachment.STOCK) ? 'initial' : 'none';
+		awmBoltDiv.style.display = (attachmentComp & Attachment.BOLT) ? 'initial' : 'none';
+		awmHopUpDiv.style.display = (hopUpComp) ? 'initial' : 'none';
+		
+		for(let hopUpIndex = 0; hopUpIndex < HopUp.COUNT; ++hopUpIndex) {
+			let hopUpFlag = 1 << hopUpIndex;
+			let hopUpEntry = document.getElementById('input_hopUp' + hopUpFlag);
+			
+			hopUpEntry.style.display = (hopUpComp & hopUpFlag) ? 'initial' : 'none';
+		}
 		
 		for(let aIndex = 0; aIndex < activeWeapons.length; ++aIndex) {
 			aButton = document.getElementById('activeWeapon' + aIndex);
-			if(aIndex == selectedWeaponIndex) {
-				aButton.classList.add('weaponSelected');
-			} else {
-				aButton.classList.remove('weaponSelected');
-			}
+			if(aIndex == selectedWeaponIndex) {	aButton.classList.add('weaponSelected'); }
+			else { aButton.classList.remove('weaponSelected'); }
 		}
+		
+		awmDiv.style.display = 'initial';
 	}
 }
 
@@ -127,19 +186,6 @@ function remove_weapon(activeIndex) {
 }
 
 // Input handling
-function validate_index() {
-	if(selectedWeaponIndex < 0) {
-		console.warn('No weapon selected, this input should not be visible!');
-		return false;
-	}
-	else if(selectedWeaponIndex >= activeWeapons.length) {
-		console.warn('Weapon index out of range! ' + selectedWeaponIndex);
-		return false;
-	}
-	
-	return true;
-}
-
 awmHeader.onclick = function() {
 	unselect_weapon();
 }
@@ -184,6 +230,14 @@ tacReloadCheckbox.oninput = function() {
 	
 	let selectedWeapon = activeWeapons[selectedWeaponIndex];
 	selectedWeapon.weaponMods.tacReload = this.checked;
+	refresh_chart();
+}
+
+hopUpSelect.oninput = function() {
+	if(!validate_index()) { return }
+	
+	let selectedWeapon = activeWeapons[selectedWeaponIndex];
+	selectedWeapon.weaponMods.hopUp = Number(this.value);
 	refresh_chart();
 }
 
@@ -280,5 +334,21 @@ function page_setup_weapons() {
 		html +=		'</button>\n';
 		
 		weaponSelectDiv.innerHTML += html;
+	}
+	
+	// Populate Hop-Ups
+	let noneEntry = document.createElement('option');
+	noneEntry.value = 0;
+	noneEntry.text = get_hop_up_name(0);
+	hopUpSelect.add(noneEntry);
+	
+	for(let hopUpIndex = 0; hopUpIndex < HopUp.COUNT; ++hopUpIndex) {
+		let hopUpFlag = 1 << hopUpIndex;
+		let hopUpEntry = document.createElement('option');
+		
+		hopUpEntry.value = hopUpFlag;
+		hopUpEntry.id = 'input_hopUp' + hopUpFlag;
+		hopUpEntry.text = get_hop_up_name(hopUpFlag);
+		hopUpSelect.add(hopUpEntry);
 	}
 }

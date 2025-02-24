@@ -29,13 +29,35 @@ function get_rarity_name(rarity) {
 	return 'Unavailable';
 }
 
-// Only the ones that are relvenant to damage output
+function get_hop_up_name(hopUp) {
+	switch(hopUp) {
+		case HopUp.DISRUPTOR: { return 'Disruptor Rounds'; } break;
+		case HopUp.HAMMERPOINT: { return 'Hammerpoint Rounds'; } break;
+		case HopUp.BOOSTED_LOADER: { return 'Boosted Loader'; } break;
+		case HopUp.SPLATTER: { return 'Splatter Rounds'; } break;
+		case HopUp.SELECTFIRE: { return 'Selectfire Receiver'; } break;
+		case HopUp.TURBO: { return 'Turbocharger'; } break;
+	}
+	
+	return 'None';
+}
+
+const Attachment = {
+	MAG:   0x01,
+	STOCK: 0x02, // Also counts for sniper stock
+	BOLT:  0x04,
+};
+
+// Only the ones that are relevenant to damage output (0 means no Hop-Up)
 const HopUp = {
-	Disruptor:     0x01,
-	Hammerpoint:   0x02,
-	BoostedLoader: 0x04,
-	Splatter:      0x08,
-	Selectfire:    0x10,
+	DISRUPTOR:      0x01, // Unimplemented
+	HAMMERPOINT:    0x02, // Unimplemented
+	BOOSTED_LOADER: 0x04, // Unimplemented
+	SPLATTER:       0x08, // Unimplemented
+	SELECTFIRE:     0x10, // Unimplemented
+	TURBO:          0x20, // Unimplemented
+	
+	COUNT:			6, // increment this when adding new ones
 };
 
 function get_shield_health(shieldRarity) {

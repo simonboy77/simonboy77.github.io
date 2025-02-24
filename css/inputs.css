@@ -81,3 +81,7 @@
 	float: right;
 	height: 100%;
 }
+
+.inactive {
+	color: #777777;
+}

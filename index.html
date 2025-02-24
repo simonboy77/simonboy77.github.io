@@ -28,7 +28,7 @@
 					
 					<input type='image' class='trashBtn' id='input_delete' src='res/trash.svg'/>
 					
-					<div class='dropdown'>
+					<div class='dropdown' id='awmMagDiv'>
 						<p class='elementTitle'>Magazine:</p>
 						<select class='dropdownValue' id='input_mag'>
 							<option value='0'>None</option>
@@ -38,7 +38,7 @@
 						</select>
 					</div>
 
-					<div class='dropdown'>
+					<div class='dropdown' id='awmStockDiv'>
 						<p class='elementTitle'>Stock:</p>
 						<select class='dropdownValue' id='input_stock'>
 							<option value='0'>None</option>
@@ -48,7 +48,7 @@
 						</select>
 					</div>
 
-					<div class='dropdown'>
+					<div class='dropdown' id='awmBoltDiv'>
 						<p class='elementTitle'>Shotgun Bolt:</p>
 						<select class='dropdownValue' id='input_bolt'>
 							<option value='0'>None</option>
@@ -60,11 +60,17 @@
 					
 					<div class='breakDiv'></div>
 					
-					<div class='checkbox'>
+					<div class='checkbox' id='awmTacReloadDiv'>
 						<label for='input_tacReload'>
 							<input type='checkbox' id='input_tacReload'>
 							Tactical Reload
 						</label>
+					</div>
+					
+					<div class='dropdown' id='awmHopUpDiv'>
+						<p class='elementTitle'>Hop-Up:</p>
+						<select class='dropdownValue' id='input_hopUp'>
+						</select>
 					</div>
 					
 					<div class='breakDiv'></div>
@@ -74,7 +80,7 @@
 			<div class='globalMods' id='globalModsDiv'>
 				<button class='foldBtn'>Global Weapon Modifications</button>
 				<div class='foldContent'>
-					<div class='dropdown' disabled>
+					<div class='dropdown'>
 						<p class='elementTitle'>Magazine:</p>
 						<select class='dropdownValue' id='input_globalMag'>
 							<option value='0'>None</option>
@@ -239,6 +245,7 @@
 </div>
 
 <script src='src/types.js'></script>
+<script src='src/weapon_calc.js'></script>
 <script src='src/weapon.js'></script>
 <script src='src/charting.js'></script>
 <script src='src/page_handling_charts.js'></script>

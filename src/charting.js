@@ -192,7 +192,7 @@ function chart_update_damage_per_mag(chart, data, graphMods, magRarity) {
 	chart.data = data;
 	
 	let title = get_chart_title(ChartTypes.DAMAGE_PER_MAG);
-	title += ' (Default Mag: ' + get_rarity_name(magRarity) + ')';
+	title += ' (Global Mag: ' + get_rarity_name(magRarity) + ')';
 	damagePerMagOptions.plugins.title.text = title;
 	
 	chart.update();
