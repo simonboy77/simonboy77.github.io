@@ -1,6 +1,10 @@
+// TODO:
+// - after the last bullet of a burst, is there only the burstDelay or also the bulletDelay?
+// - same for full auto, does the last bullet have the delay? does the reload start instantly?
+
 function calc_dpm_general(weapon, damageMods, weaponMods, onlyBase = false) {
 	let totalMagSize = weapon.get_mag_size(weaponMods, onlyBase);		
-	let averageDamage = weapon.get_average_damage_per_shot(damageMods);
+	let averageDamage = weapon.get_average_damage_per_shot(damageMods, weaponMods);
 	
 	return totalMagSize * averageDamage;
 }
@@ -8,7 +12,7 @@ function calc_dpm_general(weapon, damageMods, weaponMods, onlyBase = false) {
 // Auto
 function calc_mag_size_auto(weapon, weaponMods, onlyBase = false) {
 	let magSize = weapon.get_bullet_count_from_mag_rarity(weaponMods);
-		
+	
 	if(!onlyBase) {
 		if(weaponMods.tacReload) { magSize -= 1; }
 	}
@@ -20,11 +24,13 @@ function calc_fire_time_per_mag_auto(weapon, weaponMods) {
 	let totalMagSize = weapon.get_mag_size(weaponMods);
 	let secondsPerRound = weapon.get_seconds_per_round(weaponMods);
 
-	return secondsPerRound * (totalMagSize - 1); // first bullet is instant
+	// -1 because last bullet has no delay
+	return secondsPerRound * (totalMagSize - 1);
 }
 
 function calc_dot_auto(weapon, seconds, damageMods, weaponMods) {
 	const data = [];
+	data.push({x:0,y:0});
 	
 	if (!weapon.validate_weapon(weaponMods)) { return data; }
 	if (seconds <= 0.0) {
@@ -33,29 +39,34 @@ function calc_dot_auto(weapon, seconds, damageMods, weaponMods) {
 	}
 	
 	let totalMagSize = weapon.get_mag_size(weaponMods);		
-	let averageDamage = weapon.get_average_damage_per_shot(damageMods);
+	let averageDamage = weapon.get_average_damage_per_shot(damageMods, weaponMods);
 	let secondsPerRound = weapon.get_seconds_per_round(weaponMods);
 	let reloadTime = weapon.get_reload_time(weaponMods);
+	let fireDelay = weapon.get_fire_delay(weaponMods);
 	
-	let totalDamage = 0.0;
-	let secondsPassed = 0.0;
-	let curMag = totalMagSize;
+	let totalDamage = 0.0; let curMag = totalMagSize;
+	let secondsPassed = weapon.get_first_hit_delay(damageMods, weaponMods);
+	data.push({x:secondsPassed,y:totalDamage});
 	
-	while (secondsPassed < seconds) {
-		curMag -= 1;
+	while(secondsPassed < seconds) {
+		--curMag;
+		
 		totalDamage += averageDamage;
 		data.push({x:secondsPassed,y:totalDamage});
 		
 		if(curMag > 0) {
 			secondsPassed += secondsPerRound;
-		}
-		else {
-			curMag = totalMagSize;
-			secondsPassed += reloadTime;
+		} else {
+			secondsPassed += (reloadTime + fireDelay);
 			
-			if(secondsPassed > seconds) { secondsPassed = seconds; }
-			data.push({x:secondsPassed,y:totalDamage});
+			curMag = totalMagSize;
+			if((weaponMods.hopUp & HopUp.BOOSTED_LOADER) && weaponMods.tacReload) {
+				curMag += weapon.magBonusBL;
+			}
 		}
+		
+		// show how long the gun went without dealing damage
+		data.push({x:secondsPassed,y:totalDamage});
 	}
 	
 	return data;
@@ -64,25 +75,33 @@ function calc_dot_auto(weapon, seconds, damageMods, weaponMods) {
 function calc_ttk_auto(weapon, damageMods, weaponMods) {
 	if (!weapon.validate_weapon(weaponMods)) { return 0.0; }
 	
-	let totalMagSize = weapon.get_mag_size(weaponMods);		
-	let averageDamage = weapon.get_average_damage_per_shot(damageMods);
-	let averageDamagePerMag = weapon.calc_dpm(damageMods, weaponMods);
-	
-	let reloadTime = weapon.get_reload_time(weaponMods);
-	let fireTime = weapon.calc_fire_time_per_mag(weaponMods);
-	
 	let targetHP = damageMods.shield + damageMods.health;
-	let secondsPassed = 0.0;
+	let secondsPassed = weapon.get_first_hit_delay(damageMods, weaponMods);
 	
-	while(targetHP >= averageDamagePerMag) {
-		targetHP -= averageDamagePerMag;
-		secondsPassed += (fireTime + reloadTime);
+	if(targetHP > 0.0) { // Apply full mags
+		let averageDamagePerMag = weapon.calc_dpm(damageMods, weaponMods);
+		let magsNeeded = targetHP / averageDamagePerMag;
+		
+		if(magsNeeded) {
+			let magTime = weapon.calc_fire_time_per_mag(weaponMods);
+			let magDelay = weapon.get_reload_time(weaponMods) + weapon.get_fire_delay(weaponMods);
+			let magsNeededFloored = Math.floor(magsNeeded);
+			
+			targetHP -= magsNeededFloored * averageDamagePerMag;
+			secondsPassed += magsNeededFloored * (magTime + magDelay);
+			
+			// Remove last delay if it was a clean kill
+			if(magsNeeded == magsNeededFloored) { secondsPassed -= magDelay; }
+		}
 	}
 	
-	let finalRounds = Math.ceil(targetHP / averageDamage);
-	let secondsPerRound = weapon.get_seconds_per_round(weaponMods);
-	
-	secondsPassed += secondsPerRound * (finalRounds - 1); // first bullet is instant
+	if(targetHP > 0.0) { // Apply final rounds
+		let averageDamage = weapon.get_average_damage_per_shot(damageMods, weaponMods);
+		let roundsNeeded = Math.ceil(targetHP / averageDamage);
+		
+		// -1 because only the time in between bullets is delayed
+		secondsPassed += weapon.get_seconds_per_round(weaponMods) * (roundsNeeded - 1);
+	}
 	
 	return secondsPassed;
 }
@@ -90,7 +109,7 @@ function calc_ttk_auto(weapon, damageMods, weaponMods) {
 function calc_dps_auto(weapon, damageMods, weaponMods) {
 	if (!weapon.validate_weapon(weaponMods)) { return 0.0; }
 	
-	let damage = weapon.get_average_damage_per_shot(damageMods);
+	let damage = weapon.get_average_damage_per_shot(damageMods, weaponMods);
 	let dps = damage * weapon.get_rounds_per_second(weaponMods);
 	
 	return dps;
@@ -108,17 +127,26 @@ function calc_mag_size_burst(weapon, weaponMods, onlyBase = false) {
 }
 
 function calc_fire_time_per_mag_burst(weapon, weaponMods) {
-	// TODO: this does not take uneven bursts into account
 	let totalMagSize = weapon.get_mag_size(weaponMods);
 	let burstCount = Math.floor(totalMagSize / weapon.burstSize);
 	let secondsPerBurst = weapon.get_seconds_per_burst(weaponMods);
-	let tail = weapon.get_seconds_per_round(weaponMods) + weapon.burstDelay;
 	
-	return (secondsPerBurst * burstCount) - tail;
+	// -1 because the burst delay only occurs between bursts
+	let fireTime = (secondsPerBurst * burstCount) + (weapon.burstDelay * (burstCount - 1));
+	
+	let totalRounds = burstCount * weapon.burstSize;
+	if(totalRounds < totalMagSize) { // Uneven burst somehow
+		let remainingBullets = totalMagSize - totalRounds;
+		fireTime += weapon.get_seconds_per_round(weaponMods) * (remainingBullets - 1);
+		fireTime += weapon.burstDelay;
+	}
+	
+	return fireTime;
 }
 
 function calc_dot_burst(weapon, seconds, damageMods, weaponMods) {
 	const data = [];
+	data.push({x:0,y:0});
 	
 	if (!weapon.validate_weapon(weaponMods)) { return data; }
 	if (seconds <= 0.0) {
@@ -126,15 +154,15 @@ function calc_dot_burst(weapon, seconds, damageMods, weaponMods) {
 		return data;
 	}
 	
-	let totalMagSize = weapon.get_mag_size(weaponMods);		
-	let averageDamage = weapon.get_average_damage_per_shot(damageMods);
+	let totalMagSize = weapon.get_mag_size(weaponMods);
+	let averageDamage = weapon.get_average_damage_per_shot(damageMods, weaponMods);
 	let secondsPerRound = weapon.get_seconds_per_round(weaponMods);
 	let reloadTime = weapon.get_reload_time(weaponMods);
+	let fireDelay = weapon.get_fire_delay(weaponMods);
 	
-	let totalDamage = 0.0;
-	let secondsPassed = 0.0;
-	let curMag = totalMagSize;
-	let curBurst = weapon.burstSize;
+	let totalDamage = 0.0; let curMag = totalMagSize; let curBurst = weapon.burstSize;
+	let secondsPassed = weapon.get_first_hit_delay(damageMods, weaponMods);
+	data.push({x:secondsPassed,y:totalDamage});
 	
 	while (secondsPassed < seconds) {
 		--curMag;
@@ -146,23 +174,21 @@ function calc_dot_burst(weapon, seconds, damageMods, weaponMods) {
 		if(curMag > 0) {
 			if(curBurst > 0) {
 				secondsPassed += secondsPerRound;
-			}
-			else {
-				curBurst = weapon.burstSize;
+			} else {
 				secondsPassed += weapon.burstDelay;
-				
-				if(secondsPassed > seconds) { secondsPassed = seconds; }
-				data.push({x:secondsPassed,y:totalDamage});
-			}	
-		}
-		else {
-			curMag = totalMagSize;
-			curBurst = weapon.burstSize;
-			secondsPassed += reloadTime;
+				curBurst = weapon.burstSize;
+			}
+		} else {
+			secondsPassed += (reloadTime + fireDelay);
 			
-			if(secondsPassed > seconds) { secondsPassed = seconds; }
-			data.push({x:secondsPassed,y:totalDamage});
+			curMag = totalMagSize; curBurst = weapon.burstSize;
+			if((weaponMods.hopUp & HopUp.BOOSTED_LOADER) && weaponMods.tacReload) {
+				curMag += weapon.magBonusBL;
+			}
 		}
+		
+		// show how long the gun went without dealing damage
+		data.push({x:secondsPassed,y:totalDamage});
 	}
 	
 	return data;
@@ -171,36 +197,49 @@ function calc_dot_burst(weapon, seconds, damageMods, weaponMods) {
 function calc_ttk_burst(weapon, damageMods, weaponMods) {
 	if (!weapon.validate_weapon(weaponMods)) { return 0.0; }
 	
-	let totalMagSize = weapon.get_mag_size(weaponMods);		
-	let averageDamage = weapon.get_average_damage_per_shot(damageMods);
-	let averageDamagePerBurst = weapon.get_average_damage_per_burst(damageMods);
-	let averageDamagePerMag = weapon.calc_dpm(damageMods, weaponMods);
-	
-	let reloadTime = weapon.get_reload_time(weaponMods);
-	let fireTime = weapon.calc_fire_time_per_mag(weaponMods);
-	
 	let targetHP = damageMods.shield + damageMods.health;
-	let secondsPassed = 0.0;
+	let secondsPassed = weapon.get_first_hit_delay(damageMods, weaponMods);
 	
-	while(targetHP >= averageDamagePerMag) {
-		targetHP -= averageDamagePerMag;
-		secondsPassed += (fireTime + reloadTime);
+	if(targetHP > 0.0) { // Apply full mags
+		let averageDamagePerMag = weapon.calc_dpm(damageMods, weaponMods);
+		let magsNeeded = targetHP / averageDamagePerMag;
+		
+		if(magsNeeded) {
+			let magTime = weapon.calc_fire_time_per_mag(weaponMods);
+			let magDelay = weapon.get_reload_time(weaponMods) + weapon.get_fire_delay(weaponMods);
+			let magsNeededFloored = Math.floor(magsNeeded);
+			
+			targetHP -= magsNeededFloored * averageDamagePerMag;
+			secondsPassed += magsNeededFloored * (magTime + magDelay);
+			
+			// Remove last delay if it was a clean kill
+			if(magsNeeded == magsNeededFloored) { secondsPassed -= magDelay; }
+		}
 	}
 	
-	// TODO: if one clean burst kills, than the time between bursts should be ignored!!
+	if(targetHP > 0.0) { // Apply full bursts
+		let averageDamagePerBurst = weapon.get_average_damage_per_burst(damageMods, weaponMods);
+		let burstsNeeded = targetHP / averageDamagePerBurst;
+		
+		if(burstsNeeded) {
+			let burstTime = weapon.get_seconds_per_burst(weaponMods);
+			let burstsNeededFloored = Math.floor(burstsNeeded);
+			
+			targetHP -= burstsNeededFloored * averageDamagePerBurst;
+			secondsPassed += burstsNeededFloored * (burstTime + weapon.burstDelay);
+			
+			// Remove last delay if it was a clean kill
+			if(burstsNeeded == burstsNeededFloored) { secondsPassed -= weapon.burstDelay; }
+		}
+	}
 	
-	// Apply final bursts
-	let finalBursts = Math.floor(targetHP / averageDamagePerBurst);
-	let spBurst = weapon.get_seconds_per_burst(weaponMods);
-	
-	secondsPassed += spBurst * finalBursts;
-	targetHP -= averageDamagePerBurst * finalBursts;
-	
-	// Apply final rounds
-	let finalRounds = Math.ceil(targetHP / averageDamage);
-	let spRound = weapon.get_seconds_per_round(weaponMods);
-	
-	secondsPassed += spRound * (finalRounds - 1); // first bullet is instant
+	if(targetHP > 0.0) { // Apply final rounds
+		let averageDamage = weapon.get_average_damage_per_shot(damageMods, weaponMods);
+		let roundsNeeded = Math.ceil(targetHP / averageDamage);
+		
+		// -1 because only the time in between bullets is delayed
+		secondsPassed += weapon.get_seconds_per_round(weaponMods) * (roundsNeeded - 1);
+	}
 	
 	return secondsPassed;
 }
@@ -208,9 +247,9 @@ function calc_ttk_burst(weapon, damageMods, weaponMods) {
 function calc_dps_burst(weapon, damageMods, weaponMods) {
 	if (!weapon.validate_weapon(weaponMods)) { return 0.0; }
 	
-	let dpBurst = weapon.get_average_damage_per_burst(damageMods);
+	let dpBurst = weapon.get_average_damage_per_burst(damageMods, weaponMods);
 	let spBurst = weapon.get_seconds_per_burst(weaponMods);
-	let dps = dpBurst / spBurst;
+	let dps = dpBurst / (spBurst + weapon.burstDelay);
 	
 	return dps;
 }

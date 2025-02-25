@@ -52,13 +52,24 @@ const Attachment = {
 const HopUp = {
 	DISRUPTOR:      0x01, // Unimplemented
 	HAMMERPOINT:    0x02, // Unimplemented
-	BOOSTED_LOADER: 0x04, // Unimplemented
-	SPLATTER:       0x08, // Unimplemented
-	SELECTFIRE:     0x10, // Unimplemented
+	BOOSTED_LOADER: 0x04,
+	SPLATTER:       0x08,
+	SELECTFIRE:     0x10,
 	TURBO:          0x20, // Unimplemented
 	
 	COUNT:			6, // increment this when adding new ones
 };
+
+/*
+
+specials:
+- rampart lmg quick reload
+- sentinel charge up
+- rampage rev up
+- 
+*/
+
+// TODO: at what distance does the charge rifle start gaining damage?
 
 function get_shield_health(shieldRarity) {
 	switch (shieldRarity) {
@@ -75,9 +86,10 @@ function get_shield_health(shieldRarity) {
 }
 
 class DamageModifiers {
-	constructor(sh, hp, htRt, hdRt, lgRt, amp, mk, ff) {
+	constructor(sh, hp, htRt, hdRt, lgRt, ds, amp, mk, ff) {
 		this.shield = sh; this.health = hp;
 		this.hitRate = htRt; this.headshotRate = hdRt; this.legshotRate = lgRt;
+		this.distance = ds;
 		this.amped = amp; this.marked = mk; this.fortified = ff;
 	}
 }

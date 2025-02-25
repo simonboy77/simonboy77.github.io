@@ -19,11 +19,13 @@ let secondsSlider = document.getElementById('input_seconds');
 let showShieldsCheckbox = document.getElementById('input_showShields');
 let minAccuracySlider = document.getElementById('input_minAccuracy');
 let maxAccuracySlider = document.getElementById('input_maxAccuracy');
+let distanceSlider = document.getElementById('input_distance');
 
 // Misc
 let accuracyText = document.getElementById('accuracyText');
 let headshotText = document.getElementById('headshotText');
 let legshotText  = document.getElementById('legshotText');
+let distanceText = document.getElementById('distanceText');
 let secondsText = document.getElementById('secondsText');
 let minAccuracyText = document.getElementById('minAccuracyText');
 let maxAccuracyText = document.getElementById('maxAccuracyText');
@@ -32,7 +34,6 @@ let weaponSelectDiv = document.getElementById('weaponSelect');
 let awmDiv = document.getElementById('awmDiv');
 let globalModsDiv = document.getElementById('globalModsDiv');
 let borderWidth = window.getComputedStyle(document.body).getPropertyValue('--borderWidth');
-
 
 function update_slider_text(slider, text, postFix = '') {
 	text.value = slider.value + postFix;
@@ -141,6 +142,12 @@ legshotSlider.oninput = function() {
 	refresh_chart();
 }
 
+distanceSlider.oninput = function() {
+	update_slider_text(this, distanceText, 'm');
+	damageMods.distance = Number(this.value);
+	refresh_chart();
+}
+
 fortifiedCheckbox.oninput = function() {
 	damageMods.fortified = this.checked;
 	refresh_chart();
@@ -228,6 +235,7 @@ function page_setup() {
 	update_slider_text(accuracySlider, accuracyText, '%');
 	update_slider_text(headshotSlider, headshotText, '%');
 	update_slider_text(legshotSlider,  legshotText, '%');
+	update_slider_text(distanceSlider, distanceText, 'm');
 	update_slider_text(secondsSlider,  secondsText);
 	update_slider_text(minAccuracySlider, minAccuracyText, '%');
 	update_slider_text(maxAccuracySlider, maxAccuracyText, '%');
@@ -238,11 +246,13 @@ function page_setup() {
 	let hitRate = Number(accuracySlider.value) / 100.0;
 	let headshotRate = Number(headshotSlider.value) / 100.0;
 	let legshotRate = Number(legshotSlider.value) / 100.0;
+	let distance = Number(distanceSlider.value);
 	let fortified = fortifiedCheckbox.checked;
 	let amped = ampedCheckbox.checked;
 	let marked = markedCheckbox.checked;
 	
-	damageMods = new DamageModifiers(shield, health, hitRate, headshotRate, legshotRate, fortified, amped, marked);
+	damageMods = new DamageModifiers(shield, health, hitRate, headshotRate, legshotRate, distance,
+                                     fortified, amped, marked);
 	
 	// Global weapon mods
 	let magRarity = Number(globalMagSelect.value);
@@ -252,7 +262,8 @@ function page_setup() {
 	let tacReload = globalTacReloadCheckbox.checked;
 	let ampReload = false;
 	
-	globalWeaponMods = new WeaponModifiers(magRarity, stockRarity, boltRarity, hopUp, tacReload, ampReload, true);
+	globalWeaponMods = new WeaponModifiers(magRarity, stockRarity, boltRarity, hopUp, tacReload,
+                                           ampReload, true);
 	
 	page_setup_charts();
 	page_setup_weapons();
