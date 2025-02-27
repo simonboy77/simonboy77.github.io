@@ -261,9 +261,10 @@ function page_setup() {
 	let hopUp = 0;
 	let tacReload = globalTacReloadCheckbox.checked;
 	let ampReload = false;
+	let traits = 0;
 	
 	globalWeaponMods = new WeaponModifiers(magRarity, stockRarity, boltRarity, hopUp, tacReload,
-                                           ampReload, true);
+                                           ampReload, traits, true);
 	
 	page_setup_charts();
 	page_setup_weapons();

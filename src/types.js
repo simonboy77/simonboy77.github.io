@@ -6,6 +6,8 @@ const clrEpic       = '#B237C8';
 const clrLegendary  = '#CEAD21';
 const clrMythic     = '#FF4E1D';
 
+const chartLineWidth = 2;
+
 const Rarity = {
 	NONE:        0,
 	COMMON:      1,
@@ -60,13 +62,16 @@ const HopUp = {
 	COUNT:			6, // increment this when adding new ones
 };
 
+const Trait = {
+	MODDED_LOADER:   0x01, // Unimplemented // LMG increase mag capacity and faster reload
+	FIRE_RATE_CHANGE: 0x02, // Unimplemented // nemesis & devotion
+	DAMAGE_CHANGE:    0x04, // Unimplemented // bocek & 30-30
+};
+
 /*
 
 specials:
-- rampart lmg quick reload
-- sentinel charge up
-- rampage rev up
-- 
+- reloading bullets one at a time (ask user if they want to fully reload or do 1-shoot-1-shoot)
 */
 
 // TODO: at what distance does the charge rifle start gaining damage?
@@ -95,10 +100,12 @@ class DamageModifiers {
 }
 
 class WeaponModifiers {
-	constructor(mag, stock, bolt, hpUp, tac, amp, flw) {
+	constructor(mag, stock, bolt, hpUp, tac, amp, tr, flw) {
 		this.magRarity = mag; this.stockRarity = stock; this.boltRarity = bolt;
 		this.hopUp = hpUp;
 		this.tacReload = tac, this.ampReload = amp;
+		this.traits = tr;
+		
 		this.followGlobal = flw;
 	}
 }

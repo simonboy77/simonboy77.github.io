@@ -69,7 +69,7 @@ let baseOptions = {
 	},
 	elements: {
 		line: {
-			borderWidth: 2
+			borderWidth: chartLineWidth
 		},
 		point: {
 			pointStyle: false

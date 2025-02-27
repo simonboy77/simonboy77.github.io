@@ -12,7 +12,9 @@ let magSelect = document.getElementById('input_mag');
 let stockSelect = document.getElementById('input_stock');
 let boltSelect = document.getElementById('input_bolt');
 let tacReloadCheckbox = document.getElementById('input_tacReload');
+let fireModeSelect = document.getElementById('input_fireMode');
 let hopUpSelect = document.getElementById('input_hopUp');
+let moddedLoaderCheckbox = document.getElementById('input_moddedLoader');
 
 // Misc
 let awmHeader = document.getElementById('awmHeader');
@@ -21,7 +23,9 @@ let awmMagDiv = document.getElementById('awmMagDiv');
 let awmStockDiv = document.getElementById('awmStockDiv');
 let awmBoltDiv = document.getElementById('awmBoltDiv');
 let awmTacReloadDiv = document.getElementById('awmTacReloadDiv');
+let awmFireModeDiv = document.getElementById('awmFireModeDiv');
 let awmHopUpDiv = document.getElementById('awmHopUpDiv');
+let awmModdedLoaderDiv = document.getElementById('awmModdedLoaderDiv');
 
 // Weapon handling
 function validate_index() {
@@ -94,7 +98,7 @@ function add_weapon(weaponIndex) {
 	let weapon = weapons_S24[weaponIndex];
 	let activeIndex = activeWeapons.length;
 	
-	activeWeapons.push(new ModdedWeapon(weapon, globalWeaponMods, colorNum++));
+	activeWeapons.push(new ModdedWeapon(cloneDeep(weapon), globalWeaponMods, colorNum++));
 	refresh_chart();
 	
 	let activeWeapon = activeWeapons[activeIndex];
@@ -119,14 +123,13 @@ function select_weapon(activeIndex) {
 		selectedWeaponIndex = -1;
 		awmDiv.style.display = 'none';
 	} else {
-		selectedWeaponIndex = activeIndex;
-		sw_follow_global(activeWeapons[selectedWeaponIndex].weaponMods.followGlobal);
-		
 		let activeWeapon = activeWeapons[activeIndex];
+		selectedWeaponIndex = activeIndex;
+		
 		let attachmentComp = activeWeapon.weapon.compatibleAttachments;
 		let hopUpComp = activeWeapon.weapon.compatibleHopUps;
-		
-		hopUpSelect.value = activeWeapon.weaponMods.hopUp;
+		let traitComp = activeWeapon.weapon.compatibleTraits;
+		let fireModeCount = activeWeapon.get_fire_mode_count();
 		
 		awmHeader.innerHTML = activeWeapon.get_name() + ' Modifications';
 		awmHeader.style.backgroundColor = activeWeapon.color;
@@ -135,12 +138,23 @@ function select_weapon(activeIndex) {
 		awmMagDiv.style.display = (attachmentComp & Attachment.MAG) ? 'initial' : 'none';
 		awmStockDiv.style.display = (attachmentComp & Attachment.STOCK) ? 'initial' : 'none';
 		awmBoltDiv.style.display = (attachmentComp & Attachment.BOLT) ? 'initial' : 'none';
+		awmFireModeDiv.style.display = (fireModeCount > 1) ? 'initial' : 'none';
 		awmHopUpDiv.style.display = (hopUpComp) ? 'initial' : 'none';
+		awmModdedLoaderDiv.style.display = (traitComp & Trait.MODDED_LOADER) ? 'initial' : 'none';
 		
+		// Populate fire-modes
+		fireModeSelect.innerHTML = '';
+		for(let fireModeIndex = 0; fireModeIndex < fireModeCount; ++fireModeIndex) {
+			let fireModeEntry = document.createElement('option');
+			fireModeEntry.value = fireModeIndex;
+			fireModeEntry.text = activeWeapon.get_fire_mode_name(fireModeIndex);
+			fireModeSelect.add(fireModeEntry);
+		}
+		
+		// Display Hop-Ups
 		for(let hopUpIndex = 0; hopUpIndex < HopUp.COUNT; ++hopUpIndex) {
 			let hopUpFlag = 1 << hopUpIndex;
 			let hopUpEntry = document.getElementById('input_hopUp' + hopUpFlag);
-			
 			hopUpEntry.style.display = (hopUpComp & hopUpFlag) ? 'initial' : 'none';
 		}
 		
@@ -150,8 +164,19 @@ function select_weapon(activeIndex) {
 			else { aButton.classList.remove('weaponSelected'); }
 		}
 		
+		sw_follow_global(activeWeapon.weaponMods.followGlobal);
+		magSelect.value = activeWeapon.weaponMods.magRarity;
+		stockSelect.value = activeWeapon.weaponMods.stockRarity;
+		boltSelect.value = activeWeapon.weaponMods.boltRarity;
+		tacReloadCheckbox.checked = activeWeapon.weaponMods.tacReload;
+		fireModeSelect.value = activeWeapon.get_fire_mode_index();
+		hopUpSelect.value = activeWeapon.weaponMods.hopUp;
+		moddedLoaderCheckbox.checked = (activeWeapon.weaponMods.traits & Trait.MODDED_LOADER);
+		
 		awmDiv.style.display = 'initial';
 	}
+	
+	refresh_chart();
 }
 
 function unselect_weapon() {
@@ -233,11 +258,32 @@ tacReloadCheckbox.oninput = function() {
 	refresh_chart();
 }
 
+fireModeSelect.oninput = function() {
+	if(!validate_index()) { return; }
+	
+	let selectedWeapon = activeWeapons[selectedWeaponIndex];
+	selectedWeapon.set_fire_mode_index(Number(this.value));
+	refresh_chart();
+}
+
 hopUpSelect.oninput = function() {
-	if(!validate_index()) { return }
+	if(!validate_index()) { return; }
 	
 	let selectedWeapon = activeWeapons[selectedWeaponIndex];
 	selectedWeapon.weaponMods.hopUp = Number(this.value);
+	refresh_chart();
+}
+
+moddedLoaderCheckbox.oninput = function() {
+	if(!validate_index()) { return; }
+	let selectedWeapon = activeWeapons[selectedWeaponIndex];
+	
+	if(this.checked) {
+		selectedWeapon.weaponMods.traits |= Trait.MODDED_LOADER;
+	} else {
+		selectedWeapon.weaponMods.traits &= ~Trait.MODDED_LOADER;
+	}
+	
 	refresh_chart();
 }
 
@@ -255,10 +301,18 @@ function gen_ttk_over_accuracy_data() {
 			weaponData.push({x:accuracy,y:ttk});
 		}
 		
+		let lineWidth = chartLineWidth;
+		if(aIndex == selectedWeaponIndex) { lineWidth += 1; }
+		
 		weaponDatasets.push({
 			label: activeWeapon.get_description(globalWeaponMods),
 			data: weaponData,
-			borderColor: activeWeapon.color
+			borderColor: activeWeapon.color,
+			elements: {
+				line: {
+					borderWidth: lineWidth
+				}
+			}
 		});
 	}
 	
@@ -270,10 +324,18 @@ function gen_damage_over_time_data() {
 	let weaponDatasets = [];
 	for(let aIndex = 0; aIndex < activeWeapons.length; ++aIndex) {
 		let activeWeapon = activeWeapons[aIndex];
+		let lineWidth = chartLineWidth;
+		if(aIndex == selectedWeaponIndex) { lineWidth += 1; }
+		
 		weaponDatasets.push({
 			label: activeWeapon.get_description(globalWeaponMods),
 			data: activeWeapon.calc_dot(chartMods.seconds, damageMods),
-			borderColor: activeWeapon.color
+			borderColor: activeWeapon.color,
+			elements: {
+				line: {
+					borderWidth: lineWidth
+				}
+			}
 		});
 	}
 	
