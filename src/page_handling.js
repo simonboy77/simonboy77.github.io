@@ -5,8 +5,6 @@ let globalBoltSelect        = document.getElementById('input_globalBolt');
 let globalTacReloadCheckbox = document.getElementById('input_globalTacReload');
 
 // Damage mods
-let shieldSelect      = document.getElementById('input_shield');
-let accuracySlider    = document.getElementById('input_accuracy');
 let headshotSlider    = document.getElementById('input_headshot');
 let legshotSlider     = document.getElementById('input_legshot'); 
 let fortifiedCheckbox = document.getElementById('input_fortified');
@@ -15,13 +13,29 @@ let markedCheckbox    = document.getElementById('input_marked');
 
 // Chart mods
 let chartSelect = document.getElementById('input_chartType');
+let shieldSelect      = document.getElementById('input_shield');
 let secondsSlider = document.getElementById('input_seconds');
 let showShieldsCheckbox = document.getElementById('input_showShields');
+let accuracySlider    = document.getElementById('input_accuracy');
 let minAccuracySlider = document.getElementById('input_minAccuracy');
 let maxAccuracySlider = document.getElementById('input_maxAccuracy');
 let distanceSlider = document.getElementById('input_distance');
 
+// Divs
+let activeWeaponDiv = document.getElementById('activeWeapons');
+let weaponSelectDiv = document.getElementById('weaponSelect');
+let awmDiv = document.getElementById('awmDiv');
+let globalModsDiv = document.getElementById('globalModsDiv');
+let chartModsContentDiv = document.getElementById('chartModsContentDiv');
+let shieldDiv = document.getElementById('shieldDiv');
+let showShieldsDiv = document.getElementById('showShieldsDiv');
+let secondsDiv = document.getElementById('secondsDiv');
+let accuracyDiv = document.getElementById('accuracyDiv');
+let minAccuracyDiv = document.getElementById('minAccuracyDiv');
+let maxAccuracyDiv = document.getElementById('maxAccuracyDiv');
+
 // Misc
+let chartModsButton = document.getElementById('input_chartModsButton');
 let accuracyText = document.getElementById('accuracyText');
 let headshotText = document.getElementById('headshotText');
 let legshotText  = document.getElementById('legshotText');
@@ -29,10 +43,6 @@ let distanceText = document.getElementById('distanceText');
 let secondsText = document.getElementById('secondsText');
 let minAccuracyText = document.getElementById('minAccuracyText');
 let maxAccuracyText = document.getElementById('maxAccuracyText');
-let activeWeaponDiv = document.getElementById('activeWeapons');
-let weaponSelectDiv = document.getElementById('weaponSelect');
-let awmDiv = document.getElementById('awmDiv');
-let globalModsDiv = document.getElementById('globalModsDiv');
 let borderWidth = window.getComputedStyle(document.body).getPropertyValue('--borderWidth');
 
 function update_slider_text(slider, text, postFix = '') {
@@ -104,18 +114,6 @@ globalTacReloadCheckbox.oninput = function() {
 	refresh_chart();
 }
 
-shieldSelect.oninput = function() {
-	damageMods.shield = get_shield_health(Number(this.value));
-	refresh_chart();
-}
-
-accuracySlider.oninput = function() {
-	update_slider_text(this, accuracyText, '%');
-	damageMods.hitRate = Number(this.value) / 100.0;
-	
-	refresh_chart();
-}
-
 headshotSlider.oninput = function() {
 	update_slider_text(this, headshotText, '%');
 	damageMods.headshotRate = Number(this.value) / 100.0;
@@ -167,6 +165,11 @@ chartSelect.oninput = function() {
 	change_chart_type(Number(this.value));
 }
 
+shieldSelect.oninput = function() {
+	damageMods.shield = get_shield_health(Number(this.value));
+	refresh_chart();
+}
+
 secondsSlider.oninput = function() {
 	update_slider_text(this, secondsText);
 	chartMods.seconds = Number(this.value);
@@ -175,6 +178,13 @@ secondsSlider.oninput = function() {
 
 showShieldsCheckbox.oninput = function() {
 	chartMods.showShields = this.checked;
+	refresh_chart();
+}
+
+accuracySlider.oninput = function() {
+	update_slider_text(this, accuracyText, '%');
+	damageMods.hitRate = Number(this.value) / 100.0;
+	
 	refresh_chart();
 }
 
@@ -205,7 +215,36 @@ maxAccuracySlider.oninput = function() {
 }
 
 function show_and_hide() {
-	// TODO: show and hide elements based on the chart type
+	shieldDiv.style.display = 'none'; showShieldsDiv.style.display = 'none';
+	secondsDiv.style.display = 'none'; accuracyDiv.style.display = 'none';
+	minAccuracyDiv.style.display = 'none'; maxAccuracyDiv.style.display = 'none';
+	
+	switch(chartMods.type) {
+		case ChartType.TIME_TO_KILL: {
+			shieldDiv.style.display = 'initial'; accuracyDiv.style.display = 'initial';
+		} break;
+		
+		case ChartType.TTK_OVER_ACCURACY: {
+			shieldDiv.style.display = 'initial';
+			minAccuracyDiv.style.display = 'initial'; maxAccuracyDiv.style.display = 'initial';
+		} break;
+		
+		case ChartType.DAMAGE_OVER_TIME: {
+			showShieldsDiv.style.display = 'initial'; secondsDiv.style.display = 'initial';
+			accuracyDiv.style.display = 'initial';
+		} break;
+		
+		case ChartType.DPS_INFINITE_MAG:
+		case ChartType.DPS_PRACTICAL:
+		case ChartType.DAMAGE_PER_MAG: {
+			accuracyDiv.style.display = 'initial';
+		} break;
+	}
+	
+	if(chartModsButton.classList.contains('foldOpen')) {
+		chartModsContentDiv.style.transition = '';
+		chartModsContentDiv.style.maxHeight = chartModsContentDiv.scrollHeight + 'px';
+	}
 }
 
 function folding() {
@@ -213,19 +252,17 @@ function folding() {
 	let content = this.nextElementSibling;
 	
 	if (content.style.maxHeight) {
-		content.style.transition = 'max-height 0.2s ease-out, border-width 0s 0.2s';
+		content.style.transition = 'max-height 0.2s linear, border-width 0s 0.2s';
 		content.style.maxHeight = null;
 		content.style.borderWidth = '0px';
 	} else {
-		content.style.transition = 'max-height 0.2s ease-out';
+		content.style.transition = 'max-height 0.2s linear';
 		content.style.maxHeight =  content.scrollHeight + 'px';
 		content.style.borderWidth = '0px ' + borderWidth + ' ' + borderWidth;
 	}
 }
 
 function page_setup() {
-	show_and_hide();
-	
 	// Setup folding buttons
 	let foldBtns = document.getElementsByClassName('foldBtn');
 	for (let foldBtnIndex = 0; foldBtnIndex < foldBtns.length; ++foldBtnIndex) {
@@ -268,5 +305,7 @@ function page_setup() {
 	
 	page_setup_charts();
 	page_setup_weapons();
+	
+	show_and_hide();
 }
 

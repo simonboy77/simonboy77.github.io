@@ -15,7 +15,7 @@ class FireMode {
 	constructor(name, bodyDamage, headshotMultiplier, legshotMultiplier, roundsPerSecond, magNone,
 		magCommon, magRare, magEpic, reloadFull, reloadTac, projectileSpeed, projectileCount = 1,
 		burstSize = 0, burstDelay = 0.0, rechamberTime = 0.0, fireDelay = 0.0, ammoPerShot = 1,
-		needsSelectfire = false) {
+		needsSelectfire = false, maxBodyDamage = 0) {
 		this.name = name;
 		this.bodyDamage = bodyDamage;
 		this.headshotMultiplier = headshotMultiplier; this.legshotMultiplier = legshotMultiplier;
@@ -40,6 +40,10 @@ class FireMode {
 		this.fireDelay = fireDelay; this.ammoPerShot = ammoPerShot;
 		
 		this.needsSelectfire = needsSelectfire;
+		
+		this.minBodyDamage = bodyDamage;
+		this.maxBodyDamage = (maxBodyDamage == 0) ? bodyDamage : maxBodyDamage;
+		this.bodyDamageRange = this.maxBodyDamage - this.minBodyDamage;
 	}
 }
 
@@ -60,6 +64,10 @@ class Weapon {
 		this.maxRoundsPerSecondStep = misc.maxRoundsPerSecondStep;
 		this.maxRoundsPerSecondShots = misc.maxRoundsPerSecondShots;
 		this.maxRoundsPerSecondCooldown = misc.maxRoundsPerSecondCooldown;
+		
+		this.minDistance = misc.minDistance;
+		this.maxDistance = misc.maxDistance;
+		this.distanceRange = this.maxDistance - this.minDistance;
 	}
 	
 	get_fire_mode() { return this.fireModes[this.fireModeIndex]; }
@@ -74,7 +82,21 @@ class Weapon {
 	get_burst_delay() { return this.get_fire_mode().burstDelay; }
 	
 	get_rounds_per_second(weaponMods) {
-		return this.get_fire_mode().baseRoundsPerSecond;
+		let rps = this.get_fire_mode().baseRoundsPerSecond;
+		
+		if(this.compatibleAttachments & Attachment.BOLT) {
+			switch(weaponMods.boltRarity) {
+				case Rarity.COMMON:    { rps *= 1.15; } break; // +15%
+				case Rarity.RARE:      { rps *= 1.25; } break; // +25%
+				case Rarity.EPIC:
+				case Rarity.LEGENDARY:
+				case Rarity.MYTHIC:    { rps *= 1.35; } break; // +35%
+				
+				default: break;
+			}
+		}
+		
+		return rps;
 	}
 	
 	get_delay_per_round(weaponMods) {
@@ -83,8 +105,8 @@ class Weapon {
 	}
 	
 	get_seconds_per_burst(weaponMods) {
-		return (this.get_delay_per_round(weaponMods) * (this.get_burst_size() - 1));
-	} // -1 because only time between bullets is delayed
+		return (this.get_delay_per_round(weaponMods) * this.get_burst_size());
+	}
 	
 	get_bullet_count_from_mag_rarity(weaponMods) {
 		let fireMode = this.get_fire_mode();
@@ -105,10 +127,9 @@ class Weapon {
 		let magSize = this.get_bullet_count_from_mag_rarity(weaponMods);
 		
 		if(!onlyBase) {
-			if(weaponMods.tacReload) { // Reduce mag by one shot/burst
-				let ammoPerShot = this.get_ammo_per_shot();
+			let ammoPerShot = this.get_ammo_per_shot();
+			if(weaponMods.tacReload && (magSize > ammoPerShot)) { // Reduce mag by one shot/burst
 				let burstSize = this.get_burst_size();
-				
 				if(burstSize) {
 					let ammoPerBurst = burstSize * ammoPerShot;
 					magSize = ammoPerBurst * (Math.ceil(magSize / ammoPerBurst) - 1);
@@ -121,6 +142,13 @@ class Weapon {
 		if(weaponMods.traits & Trait.MODDED_LOADER) { magSize = Math.floor(magSize * 1.15) } // +15%
 		return magSize;
 	}
+	
+	get_shot_count(weaponMods) {
+		let magSize = this.get_mag_size(weaponMods);
+		let ammoPerShot = this.get_ammo_per_shot();
+		
+		return (magSize / ammoPerShot);
+	}
 
 	get_reload_time(weaponMods) {
 		let fireMode = this.get_fire_mode();
@@ -131,13 +159,16 @@ class Weapon {
 			else { reloadTime = fireMode.reloadTac; }
 		}
 		
-		switch(weaponMods.stockRarity) {
-			case Rarity.COMMON:  { reloadTime *= 0.967; } break; // -3.3%
-			case Rarity.RARE:    { reloadTime *= 0.933; } break; // -6.7%
-			case Rarity.EPIC:
-			case Rarity.LEGENDARY: { reloadTime *= 0.9; } break; // -10%
-			
-			default: break;
+		if(this.compatibleAttachments & Attachment.STOCK) {
+			switch(weaponMods.stockRarity) {
+				case Rarity.COMMON:    { reloadTime *= 0.967; } break; // -3.3%
+				case Rarity.RARE:      { reloadTime *= 0.933; } break; // -6.7%
+				case Rarity.EPIC:
+				case Rarity.LEGENDARY:
+				case Rarity.MYTHIC:    { reloadTime *= 0.9; } break; // -10%
+				
+				default: break;
+			}
 		}
 		
 		if(weaponMods.ampReload) { reloadTime *= 0.6; } // -40%
@@ -158,6 +189,19 @@ class Weapon {
 	get_body_damage(damageMods, weaponMods, doRounding = true) {
 		let fireMode = this.get_fire_mode();
 		let damage = fireMode.bodyDamage;
+		
+		if(this.minDistance && this.maxDistance) {
+			if(damageMods.distance <= this.minDistance) {
+				damage = fireMode.minBodyDamage;
+			} else if(damageMods.distance >= this.maxDistance) {
+				damage = fireMode.maxBodyDamage;
+			} else {
+				let distanceFromMin = damageMods.distance - this.minDistance;
+				let damageDistanceRatio = fireMode.bodyDamageRange / this.distanceRange;
+				damage = fireMode.minBodyDamage + (damageDistanceRatio * distanceFromMin);
+				damage = Math.floor(damage);
+			}
+		}
 		
 		if(damageMods.amped) { damage *= 1.2; }
 		if(damageMods.marked) { damage *= 1.15; }
@@ -243,14 +287,6 @@ class Weapon {
 		return calc_dpm_general(this, damageMods, weaponMods, onlyBase);
 	}
 	
-	calc_dot(seconds, damageMods, weaponMods) {
-		if(this.fireModes[this.fireModeIndex].burstSize) {
-			return calc_dot_burst(this, seconds, damageMods, weaponMods);
-		} else {
-			return calc_dot_auto(this, seconds, damageMods, weaponMods);
-		}
-	}
-	
 	calc_ttk(damageMods, weaponMods) {
 		if(this.fireModes[this.fireModeIndex].burstSize) {
 			return calc_ttk_burst(this, damageMods, weaponMods);
@@ -259,12 +295,45 @@ class Weapon {
 		}
 	}
 	
-	calc_dps(damageMods, weaponMods) {
+	calc_dot(seconds, damageMods, weaponMods) {
 		if(this.fireModes[this.fireModeIndex].burstSize) {
-			return calc_dps_burst(this, damageMods, weaponMods);
+			return calc_dot_burst(this, seconds, damageMods, weaponMods);
 		} else {
-			return calc_dps_auto(this, damageMods, weaponMods);
+			return calc_dot_auto(this, seconds, damageMods, weaponMods);
 		}
+	}
+	
+	calc_dps_infinite_mag(damageMods, weaponMods) {
+		if (!this.validate(damageMods, weaponMods)) { return 0.0; }
+		let dps = 0.0;
+		
+		let fireMode = this.get_fire_mode();
+		if(fireMode.burstSize) {
+			let dpBurst = this.get_average_damage_per_burst(damageMods, weaponMods);
+			let spBurst = this.get_seconds_per_burst(weaponMods);
+			dps = dpBurst / (spBurst + this.get_burst_delay());
+		} else if(this.get_shot_count(weaponMods) == 1) { // Only Bocek for now
+			let dpShot = this.get_average_damage_per_shot(damageMods, weaponMods);
+			let delay = this.get_reload_time(weaponMods) + this.get_fire_delay();
+			let trueRPS = 1.0 / (this.get_delay_per_round(weaponMods) + delay);
+			dps = dpShot * trueRPS;
+		} else {
+			let dpShot = this.get_average_damage_per_shot(damageMods, weaponMods);
+			dps = dpShot * this.get_rounds_per_second(weaponMods);
+		}
+		
+		return dps;
+	}
+	
+	calc_dps_practical(damageMods, weaponMods) {
+		if (!this.validate(damageMods, weaponMods)) { return 0.0; }
+		
+		let damagePerMag = this.calc_dpm(damageMods, weaponMods);
+		let fireTimePerMag = this.calc_fire_time_per_mag(weaponMods);
+		let magDelay = this.get_fire_delay() + this.get_reload_time(weaponMods);
+		
+		let dps = damagePerMag / (fireTimePerMag + magDelay);		
+		return dps;
 	}
 }
 
@@ -299,15 +368,19 @@ class ModdedWeapon {
 		return this.weapon.calc_dpm(damageMods, this.weaponMods, true);
 	}
 	
-	calc_dot(seconds, damageMods) {
-		return this.weapon.calc_dot(seconds, damageMods, this.weaponMods);
-	}
-	
 	calc_ttk(damageMods) {
 		return this.weapon.calc_ttk(damageMods, this.weaponMods);
 	}
 	
-	calc_dps(damageMods) {
-		return this.weapon.calc_dps(damageMods, this.weaponMods);
+	calc_dot(seconds, damageMods) {
+		return this.weapon.calc_dot(seconds, damageMods, this.weaponMods);
+	}
+	
+	calc_dps_infinite_mag(damageMods) {
+		return this.weapon.calc_dps_infinite_mag(damageMods, this.weaponMods);
+	}
+	
+	calc_dps_practical(damageMods) {
+		return this.weapon.calc_dps_practical(damageMods, this.weaponMods);
 	}
 }

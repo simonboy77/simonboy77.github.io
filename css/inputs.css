@@ -38,10 +38,7 @@
 
 .dropdown {
 	margin-top: var(--spacing);
-	margin-right: var(--spacing);
-	padding-top: 0;
-	width: 8em;
-	float: left;
+	width: 100%;
 }
 
 .elementTitle {
@@ -54,26 +51,22 @@
 }
 
 .checkbox {
-	width: 12em;
-	float: left;
+	width: 100%;
 }
 
 .slider {
 	margin-top: var(--spacing);
-	margin-right: var(--spacing);
-	padding-top: 0;
-	width: 14em;
-	float: left;
+	width: 100%;
 }
 
 .sliderTitle {
-	margin-top: 0;
+	margin-top: var(--spacing);
 	margin-bottom: 0;
 	float: left;
 }
 
 .sliderValue {
-	margin-top: 0;
+	margin-top: var(--spacing);
 	margin-bottom: 0;
 	float: right;
 }

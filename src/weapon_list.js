@@ -65,13 +65,23 @@ const weapons_S24 = [
 	// 30-30
 	
 	new Weapon('Bocek', [
-		new FireMode('Max Damage', 75.0, 1.6, 0.9, 3.0, 1, 1, 1, 1, 2.0, 2.0, 28000, 1, 0.0, 0.0,
-		              0.0 , 0.54),
-		new FireMode('Max Speed', 30.0, 1.6, 0.9, 3.0, 1, 1, 1, 1, 2.0, 2.0, 10000, 1, 0, 0.0,
-		              0.0, 0.1)
+		new FireMode('Max Damage', 75.0, 1.6, 0.9, 3.0, 1, 1, 1, 1, 0.0, 0.0, 28000, 1, 0, 0.0,
+		              0.0 , 0.46),
+		new FireMode('Max Damage (Shatter Caps)', 13.0, 1.6, 0.9, 3.0, 1, 1, 1, 1, 0.0, 0.0,
+		              28000, 7, 0, 0.0, 0.0, 0.46),
+		new FireMode('Max Speed', 30.0, 1.6, 0.9, 3.0, 1, 1, 1, 1, 0.0, 0.0, 10000, 1, 0, 0.0,
+		              0.0, 0.08),
+		new FireMode('Max Speed (Shatter Caps)', 7.0, 1.6, 0.9, 3.0, 1, 1, 1, 1, 0.0, 0.0,
+		              10000, 7, 0, 0.0, 0.0, 0.08),
 	], 0, 0, 0, 0),
 	
-	// Charge Rifle
+	new Weapon('Charge_Rifle', [
+		new FireMode('Normal', 75.0, 2.0, 0.9, 0.616, 6, 7, 8, 9, 4.6, 3.5, 33999, 1, 0, 0.0, 0.0,
+		              0.868, 1, false, 110.0),
+		new FireMode('Auto', 56.0, 2.0, 0.9, 1.394, 6, 7, 8, 9, 4.6, 3.5, 33999, 1, 0, 0.0, 0.0,
+		              0.317, 1, true, 83.0)
+	], Attachment.MAG | Attachment.STOCK, HopUp.SELECTFIRE, 0,
+	{minDistance:50,maxDistance:200}),
 	
 	new Weapon('Longbow', [
 		new FireMode('Normal', 60.0, 2.25, 0.9, 1.3, 6, 8, 10, 12, 3.66, 2.66, 30500)

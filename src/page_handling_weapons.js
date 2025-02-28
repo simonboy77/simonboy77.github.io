@@ -97,9 +97,7 @@ function add_weapon(weaponIndex) {
 	
 	let weapon = weapons_S24[weaponIndex];
 	let activeIndex = activeWeapons.length;
-	
 	activeWeapons.push(new ModdedWeapon(cloneDeep(weapon), globalWeaponMods, colorNum++));
-	refresh_chart();
 	
 	let activeWeapon = activeWeapons[activeIndex];
 	let html = '<button class=\'weaponBtn\' style=\'--borderClr: ' + activeWeapon.color + ';\' id=activeWeapon' + activeIndex + '  onclick=select_weapon(' + activeIndex + ')>';
@@ -287,17 +285,38 @@ moddedLoaderCheckbox.oninput = function() {
 	refresh_chart();
 }
 
+function gen_time_to_kill_data() {
+	let weaponData = {
+		labels: [],
+		datasets: [{
+			label: 'Time To Kill',
+			data: [],
+			backgroundColor: [],
+		}]
+	};
+	
+	for (let aIndex = 0; aIndex < activeWeapons.length; ++aIndex) {
+		let activeWeapon = activeWeapons[aIndex];
+		
+		weaponData.labels.push(activeWeapon.get_description(globalWeaponMods));
+		weaponData.datasets[0].data.push(activeWeapon.calc_ttk(damageMods));
+		weaponData.datasets[0].backgroundColor.push(activeWeapon.color);
+	}
+	
+	return weaponData;
+}
+
 function gen_ttk_over_accuracy_data() {
 	let weaponDatasets = [];
-	let oldAccuracy = damageMods.accuracy;
+	let localDamageMods = cloneDeep(damageMods); // Because we have to change hitrate
 	
 	for (let aIndex = 0; aIndex < activeWeapons.length; ++aIndex) {
 		let activeWeapon = activeWeapons[aIndex];
 		let weaponData = [];
 		
 		for (let accuracy = chartMods.minAccuracy; accuracy <= chartMods.maxAccuracy; ++accuracy) {
-			damageMods.hitRate = accuracy / 100.0;
-			let ttk = activeWeapon.calc_ttk(damageMods);
+			localDamageMods.hitRate = accuracy / 100.0;
+			let ttk = activeWeapon.calc_ttk(localDamageMods);
 			weaponData.push({x:accuracy,y:ttk});
 		}
 		
@@ -316,7 +335,6 @@ function gen_ttk_over_accuracy_data() {
 		});
 	}
 	
-	damageMods.accuracy = oldAccuracy;
 	return weaponDatasets;
 }
 
@@ -342,7 +360,7 @@ function gen_damage_over_time_data() {
 	return weaponDatasets;
 }
 
-function gen_damage_per_second_data() {
+function gen_dps_infinite_mag_data() {
 	let weaponData = {
 		labels: [],
 		datasets: [{
@@ -356,7 +374,28 @@ function gen_damage_per_second_data() {
 		let activeWeapon = activeWeapons[aIndex];
 		
 		weaponData.labels.push(activeWeapon.get_description(globalWeaponMods));
-		weaponData.datasets[0].data.push(activeWeapon.calc_dps(damageMods));
+		weaponData.datasets[0].data.push(activeWeapon.calc_dps_infinite_mag(damageMods));
+		weaponData.datasets[0].backgroundColor.push(activeWeapon.color);
+	}
+	
+	return weaponData;
+}
+
+function gen_dps_practical_data() {
+	let weaponData = {
+		labels: [],
+		datasets: [{
+			label: 'Damage Per Second',
+			data: [],
+			backgroundColor: [],
+		}]
+	};
+	
+	for (let aIndex = 0; aIndex < activeWeapons.length; ++aIndex) {
+		let activeWeapon = activeWeapons[aIndex];
+		
+		weaponData.labels.push(activeWeapon.get_description(globalWeaponMods));
+		weaponData.datasets[0].data.push(activeWeapon.calc_dps_practical(damageMods));
 		weaponData.datasets[0].backgroundColor.push(activeWeapon.color);
 	}
 	

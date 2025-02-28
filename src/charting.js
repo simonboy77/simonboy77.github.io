@@ -1,17 +1,22 @@
-const ChartTypes = {
-	TTK_OVER_ACCURACY: 0,
-	DAMAGE_OVER_TIME:  1,
-	DAMAGE_PER_SECOND: 2,
-	DAMAGE_PER_MAG:    3
+const ChartType = {
+	TIME_TO_KILL:      0,
+	TTK_OVER_ACCURACY: 1,
+	DAMAGE_OVER_TIME:  2,
+	DPS_INFINITE_MAG:  3,
+	DPS_PRACTICAL:     4,
+	DAMAGE_PER_MAG:    5,
+	
+	COUNT:             6
 };
 
 function get_chart_title(type) {
-	switch(type)
-	{
-		case ChartTypes.TTK_OVER_ACCURACY: { return 'TTK Over Accuracy'; } break;
-		case ChartTypes.DAMAGE_OVER_TIME:  { return 'Damage Over Time'; } break;
-		case ChartTypes.DAMAGE_PER_SECOND: { return 'Damage Per Second'; } break;
-		case ChartTypes.DAMAGE_PER_MAG:    { return 'Damage Per Mag'; } break;
+	switch(type) {
+		case ChartType.TIME_TO_KILL:      { return 'Time To Kill'; } break;
+		case ChartType.TTK_OVER_ACCURACY: { return 'TTK Over Accuracy'; } break;
+		case ChartType.DAMAGE_OVER_TIME:  { return 'Damage Over Time'; } break;
+		case ChartType.DPS_INFINITE_MAG:  { return 'DPS (Infinite Mag)'; } break;
+		case ChartType.DPS_PRACTICAL:     { return 'DPS (Practical)'; } break;
+		case ChartType.DAMAGE_PER_MAG:    { return 'Damage Per Mag'; } break;
 	}
 	
 	return 'Unknown Chart Type';
@@ -80,30 +85,37 @@ let baseOptions = {
 	}
 }
 
+let timeToKillOptions = cloneDeep(baseOptions);
+timeToKillOptions.scales.x.title.display = false;
+timeToKillOptions.scales.y.title.text = 'Seconds';
+timeToKillOptions.plugins.title.text = get_chart_title(ChartType.TIME_TO_KILL);
+timeToKillOptions.plugins.legend.display = false;
+timeToKillOptions.plugins.tooltip.enabled = true;
+
 let ttkOverAccuracyOptions = cloneDeep(baseOptions);
 ttkOverAccuracyOptions.scales.x.type = 'linear';
 ttkOverAccuracyOptions.scales.x.title.text = 'Accuracy';
 ttkOverAccuracyOptions.scales.y.beginAtZero = false;
 ttkOverAccuracyOptions.scales.y.title.text = 'Seconds To Kill';
-ttkOverAccuracyOptions.plugins.title.text = get_chart_title(ChartTypes.TTK_OVER_ACCURACY);
+ttkOverAccuracyOptions.plugins.title.text = get_chart_title(ChartType.TTK_OVER_ACCURACY);
 
 let damageOverTimeOptions = cloneDeep(baseOptions);
 damageOverTimeOptions.scales.x.type = 'linear';
 damageOverTimeOptions.scales.x.title.text = 'Seconds';
 damageOverTimeOptions.scales.y.title.text = 'Damage';
-damageOverTimeOptions.plugins.title.text = get_chart_title(ChartTypes.DAMAGE_OVER_TIME);
+damageOverTimeOptions.plugins.title.text = get_chart_title(ChartType.DAMAGE_OVER_TIME);
 damageOverTimeOptions.plugins.legend.labels.filter = function(item, data) { return item.text; };
 
-let damagePerSecondOptions = cloneDeep(baseOptions);
-damagePerSecondOptions.scales.x.title.display = false;
-damagePerSecondOptions.scales.y.title.text = 'Damage Per Second';
-damagePerSecondOptions.plugins.title.text = get_chart_title(ChartTypes.DAMAGE_PER_SECOND);
-damagePerSecondOptions.plugins.legend.display = false;
-damagePerSecondOptions.plugins.tooltip.enabled = true;
+let dpsInfiniteMagOptions = cloneDeep(timeToKillOptions);
+dpsInfiniteMagOptions.scales.y.title.text = 'Damage Per Second';
+dpsInfiniteMagOptions.plugins.title.text = get_chart_title(ChartType.DPS_INFINITE_MAG);
 
-let damagePerMagOptions = cloneDeep(damagePerSecondOptions);
+let dpsPracticalOptions = cloneDeep(dpsInfiniteMagOptions);
+dpsPracticalOptions.plugins.title.text = get_chart_title(ChartType.DPS_PRACTICAL);
+
+let damagePerMagOptions = cloneDeep(timeToKillOptions);
 damagePerMagOptions.scales.y.title.text = 'Damage';
-damagePerMagOptions.plugins.title.text = get_chart_title(ChartTypes.DAMAGE_PER_MAG);
+damagePerMagOptions.plugins.title.text = get_chart_title(ChartType.DAMAGE_PER_MAG);
 
 const shieldOverlayDataset = [
 	{ // Common Shield
@@ -155,13 +167,24 @@ function sort_bar_data(barData) {
 	}
 }
 
+function chart_update_time_to_kill(chart, data, graphMods, shieldRarity, accuracy) {
+	chart.data = data;
+	
+	let title = get_chart_title(ChartType.TIME_TO_KILL);
+	title += ' (' + get_rarity_name(shieldRarity) + ' Shield, ';
+	title += accuracy + '% Accurate)';
+	timeToKillOptions.plugins.title.text = title;
+	
+	chart.update();
+}
+
 function chart_update_ttk_over_accuracy(chart, datasets, graphMods, shieldRarity) {
 	chart.data.datasets = datasets;
 	
 	ttkOverAccuracyOptions.scales.x.min = graphMods.minAccuracy;
 	ttkOverAccuracyOptions.scales.x.max = graphMods.maxAccuracy;
 	
-	let title = get_chart_title(ChartTypes.TTK_OVER_ACCURACY);
+	let title = get_chart_title(ChartType.TTK_OVER_ACCURACY);
 	title += ' (' + get_rarity_name(shieldRarity) + ' Shield)';
 	ttkOverAccuracyOptions.plugins.title.text = title;
 	
@@ -169,7 +192,6 @@ function chart_update_ttk_over_accuracy(chart, datasets, graphMods, shieldRarity
 }
 
 function chart_update_damage_over_time(chart, datasets, graphMods) {
-	// todo: destroy previous dataset?
 	chart.data.datasets = datasets;
 	if(graphMods.showShields) {
 		for(let shieldIndex = 0; shieldIndex < shieldOverlayDataset.length; ++shieldIndex) {
@@ -183,7 +205,12 @@ function chart_update_damage_over_time(chart, datasets, graphMods) {
 	chart.update();
 }
 
-function chart_update_damage_per_second(chart, data, graphMods) {
+function chart_update_dps_infinite_mag(chart, data, graphMods) {
+	chart.data = data;
+	chart.update();
+}
+
+function chart_update_dps_practical(chart, data, graphMods) {
 	chart.data = data;
 	chart.update();
 }
@@ -191,7 +218,7 @@ function chart_update_damage_per_second(chart, data, graphMods) {
 function chart_update_damage_per_mag(chart, data, graphMods, magRarity) {
 	chart.data = data;
 	
-	let title = get_chart_title(ChartTypes.DAMAGE_PER_MAG);
+	let title = get_chart_title(ChartType.DAMAGE_PER_MAG);
 	title += ' (Global Mag: ' + get_rarity_name(magRarity) + ')';
 	damagePerMagOptions.plugins.title.text = title;
 	
@@ -201,7 +228,20 @@ function chart_update_damage_per_mag(chart, data, graphMods, magRarity) {
 function chart_create(chartMods) {
 	switch(chartMods.type)
 	{
-		case ChartTypes.TTK_OVER_ACCURACY: {
+		case ChartType.TIME_TO_KILL: {
+			const chart = new Chart(chartMods.canvasId, {
+				type: 'bar',
+				data: {
+					datasets: []
+				},
+				options: timeToKillOptions
+			});
+			
+			chart_update_time_to_kill(chart, [], chartMods);
+			return chart;
+		} break;
+		
+		case ChartType.TTK_OVER_ACCURACY: {
 			const chart = new Chart(chartMods.canvasId, {
 				type: 'line',
 				data: {
@@ -214,7 +254,7 @@ function chart_create(chartMods) {
 			return chart;
 		} break;
 		
-		case ChartTypes.DAMAGE_OVER_TIME: {
+		case ChartType.DAMAGE_OVER_TIME: {
 			const chart = new Chart(chartMods.canvasId, {
 				type: 'line',
 				data: {
@@ -227,20 +267,33 @@ function chart_create(chartMods) {
 			return chart;
 		} break;
 		
-		case ChartTypes.DAMAGE_PER_SECOND: {
+		case ChartType.DPS_INFINITE_MAG: {
 			const chart = new Chart(chartMods.canvasId, {
 				type: 'bar',
 				data: {
 					datasets: []
 				},
-				options: damagePerSecondOptions
+				options: dpsInfiniteMagOptions
 			});
 			
-			chart_update_damage_per_second(chart, [], chartMods);
+			chart_update_dps_infinite_mag(chart, [], chartMods);
 			return chart;
 		} break;
 		
-		case ChartTypes.DAMAGE_PER_MAG: {
+		case ChartType.DPS_PRACTICAL: {
+			const chart = new Chart(chartMods.canvasId, {
+				type: 'bar',
+				data: {
+					datasets: []
+				},
+				options: dpsPracticalOptions
+			});
+			
+			chart_update_dps_practical(chart, [], chartMods);
+			return chart;
+		} break;
+		
+		case ChartType.DAMAGE_PER_MAG: {
 			const chart = new Chart(chartMods.canvasId, {
 				type: 'bar',
 				data: {
