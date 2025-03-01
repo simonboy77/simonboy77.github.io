@@ -41,6 +41,7 @@ input[type='range'] {
 .breakDiv {
 	width: 100%;
 	height: var(--spacing);
+	clear: left;
 }
 
 .screen {

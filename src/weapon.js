@@ -13,9 +13,7 @@ fire mode takes care of:
 
 class FireMode {
 	constructor(name, bodyDamage, headshotMultiplier, legshotMultiplier, roundsPerSecond, magNone,
-		magCommon, magRare, magEpic, reloadFull, reloadTac, projectileSpeed, projectileCount = 1,
-		burstSize = 0, burstDelay = 0.0, rechamberTime = 0.0, fireDelay = 0.0, ammoPerShot = 1,
-		needsSelectfire = false, maxBodyDamage = 0) {
+		        magCommon, magRare, magEpic, reloadFull, reloadTac, projectileSpeed, misc) {
 		this.name = name;
 		this.bodyDamage = bodyDamage;
 		this.headshotMultiplier = headshotMultiplier; this.legshotMultiplier = legshotMultiplier;
@@ -32,18 +30,26 @@ class FireMode {
 		this.projectileSPM = (this.projectileMPS > 0.0) ? (1.0 / this.projectileMPS) : 0.0;
 		
 		// Optionals
-		this.projectileCount = projectileCount;
-		this.burstSize = burstSize; // 0 -> use auto calculations
-		this.burstDelay = burstDelay;
+		this.projectileCount = (misc.projectileCount) ? misc.projectileCount : 1;
+		this.burstSize = misc.burstSize; // if undefined use auto calculations
+		this.burstDelay = misc.burstDelay;
 		
-		this.rechamberTime = rechamberTime;
-		this.fireDelay = fireDelay; this.ammoPerShot = ammoPerShot;
+		this.rechamberTime = (misc.rechamberTime) ? misc.rechamberTime : 0.0;
+		this.fireDelay = (misc.fireDelay) ? misc.fireDelay : 0.0; 
+		this.ammoPerShot = (misc.ammoPerShot) ? misc.ammoPerShot : 1;
 		
-		this.needsSelectfire = needsSelectfire;
+		this.needsSelectfire = (misc.needsSelectfire) ? misc.needsSelectfire : false;
 		
+		// For charge rifle
 		this.minBodyDamage = bodyDamage;
-		this.maxBodyDamage = (maxBodyDamage == 0) ? bodyDamage : maxBodyDamage;
+		this.maxBodyDamage = (misc.maxBodyDamage) ? misc.maxBodyDamage : bodyDamage;
 		this.bodyDamageRange = this.maxBodyDamage - this.minBodyDamage;
+		
+		// For nemesis
+		this.unchargedBurstDelay = this.burstDelay;
+		this.chargedBurstDelay = (misc.chargedBurstDelay) ? misc.chargedBurstDelay : 0.0;
+		this.burstDelayRange = this.chargedBurstDelay - this.unchargedBurstDelay;
+		this.chargePerBurst = (misc.chargePerBurst) ? misc.chargePerBurst : 0.0;
 	}
 }
 
@@ -80,6 +86,17 @@ class Weapon {
 	get_ammo_per_shot() { return this.get_fire_mode().ammoPerShot; }
 	get_burst_size() { return this.get_fire_mode().burstSize; }
 	get_burst_delay() { return this.get_fire_mode().burstDelay; }
+	
+	is_burst_weapon() {
+		let fireMode = this.get_fire_mode();
+		return (fireMode.burstSize && (fireMode.burstDelay > 0.0));
+	}
+	
+	is_nemesis() {
+		let fireMode = this.get_fire_mode();
+		let isNemesis = ((fireMode.chargedBurstDelay > 0.0) && (fireMode.chargePerBurst > 0.0));
+		return (this.is_burst_weapon() && isNemesis);
+	}
 	
 	get_rounds_per_second(weaponMods) {
 		let rps = this.get_fire_mode().baseRoundsPerSecond;
@@ -276,8 +293,12 @@ class Weapon {
 	}
 	
 	calc_fire_time_per_mag(weaponMods) {
-		if(this.fireModes[this.fireModeIndex].burstSize) {
-			return calc_fire_time_per_mag_burst(this, weaponMods);
+		if(this.is_burst_weapon()) {
+			if(this.is_nemesis()) {
+				return calc_fire_time_per_mag_nemesis(this, weaponMods);
+			} else {
+				return calc_fire_time_per_mag_burst(this, weaponMods);
+			}
 		} else {
 			return calc_fire_time_per_mag_auto(this, weaponMods);
 		}
@@ -288,16 +309,24 @@ class Weapon {
 	}
 	
 	calc_ttk(damageMods, weaponMods) {
-		if(this.fireModes[this.fireModeIndex].burstSize) {
-			return calc_ttk_burst(this, damageMods, weaponMods);
+		if(this.is_burst_weapon()) {
+			if(this.is_nemesis()) {
+				return calc_ttk_nemesis(this, damageMods, weaponMods);
+			} else {
+				return calc_ttk_burst(this, damageMods, weaponMods);
+			}
 		} else {
 			return calc_ttk_auto(this, damageMods, weaponMods);
 		}
 	}
 	
 	calc_dot(seconds, damageMods, weaponMods) {
-		if(this.fireModes[this.fireModeIndex].burstSize) {
-			return calc_dot_burst(this, seconds, damageMods, weaponMods);
+		if(this.is_burst_weapon()) {
+			if(this.is_nemesis()) {
+				return calc_dot_nemesis(this, seconds, damageMods, weaponMods);
+			} else {
+				return calc_dot_burst(this, seconds, damageMods, weaponMods);
+			}
 		} else {
 			return calc_dot_auto(this, seconds, damageMods, weaponMods);
 		}
@@ -308,10 +337,15 @@ class Weapon {
 		let dps = 0.0;
 		
 		let fireMode = this.get_fire_mode();
-		if(fireMode.burstSize) {
+		if(this.is_burst_weapon()) {
 			let dpBurst = this.get_average_damage_per_burst(damageMods, weaponMods);
 			let spBurst = this.get_seconds_per_burst(weaponMods);
-			dps = dpBurst / (spBurst + this.get_burst_delay());
+			
+			if(this.is_nemesis()) { // NOTE: calc nemesis as full speed
+				dps = dpBurst / (spBurst + this.get_fire_mode().chargedBurstDelay);
+			} else {
+				dps = dpBurst / (spBurst + this.get_burst_delay());
+			}
 		} else if(this.get_shot_count(weaponMods) == 1) { // Only Bocek for now
 			let dpShot = this.get_average_damage_per_shot(damageMods, weaponMods);
 			let delay = this.get_reload_time(weaponMods) + this.get_fire_delay();
