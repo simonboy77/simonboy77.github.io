@@ -375,7 +375,6 @@ class LSTAR extends Weapon {
 	constructor(name, fireModes, cpbAttachments, cpbHopUps, cpbTraits, misc) {
 		super(name, fireModes, cpbAttachments, cpbHopUps, cpbTraits, misc);
 		this.cooldownDelay = misc.cooldownDelay;
-		console.log(this.cooldownDelay);
 	}
 
 	get_reload_time(weaponMods) {
