@@ -6,7 +6,7 @@ let globalTacReloadCheckbox = document.getElementById('input_globalTacReload');
 
 // Damage mods
 let headshotSlider    = document.getElementById('input_headshot');
-let legshotSlider     = document.getElementById('input_legshot'); 
+let legshotSlider     = document.getElementById('input_legshot');
 let fortifiedCheckbox = document.getElementById('input_fortified');
 let ampedCheckbox     = document.getElementById('input_amped');
 let markedCheckbox    = document.getElementById('input_marked');
@@ -44,6 +44,7 @@ let secondsText = document.getElementById('secondsText');
 let minAccuracyText = document.getElementById('minAccuracyText');
 let maxAccuracyText = document.getElementById('maxAccuracyText');
 let borderWidth = window.getComputedStyle(document.body).getPropertyValue('--borderWidth');
+let ctrlIsDown = false;
 
 function update_slider_text(slider, text, postFix = '') {
 	text.value = slider.value + postFix;
@@ -52,7 +53,7 @@ function update_slider_text(slider, text, postFix = '') {
 // Input handling
 globalMagSelect.oninput = function() {
 	globalWeaponMods.magRarity = Number(this.value);
-	
+
 	for(let aIndex = 0; aIndex < activeWeapons.length; ++aIndex) {
 		if(activeWeapons[aIndex].weaponMods.followGlobal) {
 			if(aIndex == selectedWeaponIndex) {
@@ -62,13 +63,13 @@ globalMagSelect.oninput = function() {
 			}
 		}
 	}
-	
+
 	refresh_chart();
 }
 
 globalStockSelect.oninput = function() {
 	globalWeaponMods.stockRarity = Number(this.value);
-	
+
 	for(let aIndex = 0; aIndex < activeWeapons.length; ++aIndex) {
 		if(activeWeapons[aIndex].weaponMods.followGlobal) {
 			if(aIndex == selectedWeaponIndex) {
@@ -78,13 +79,13 @@ globalStockSelect.oninput = function() {
 			}
 		}
 	}
-	
+
 	refresh_chart();
 }
 
 globalBoltSelect.oninput = function() {
 	globalWeaponMods.boltRarity = Number(this.value);
-	
+
 	for(let aIndex = 0; aIndex < activeWeapons.length; ++aIndex) {
 		if(activeWeapons[aIndex].weaponMods.followGlobal) {
 			if(aIndex == selectedWeaponIndex) {
@@ -94,13 +95,13 @@ globalBoltSelect.oninput = function() {
 			}
 		}
 	}
-	
+
 	refresh_chart();
 }
 
 globalTacReloadCheckbox.oninput = function() {
 	globalWeaponMods.tacReload = this.checked;
-	
+
 	for(let aIndex = 0; aIndex < activeWeapons.length; ++aIndex) {
 		if(activeWeapons[aIndex].weaponMods.followGlobal) {
 			if(aIndex == selectedWeaponIndex) {
@@ -110,33 +111,33 @@ globalTacReloadCheckbox.oninput = function() {
 			}
 		}
 	}
-	
+
 	refresh_chart();
 }
 
 headshotSlider.oninput = function() {
 	update_slider_text(this, headshotText, '%');
 	damageMods.headshotRate = Number(this.value) / 100.0;
-	
+
 	if ((Number(this.value) + Number(legshotSlider.value)) > 100) {
 		legshotSlider.value = 100 - Number(this.value);
 		update_slider_text(legshotSlider, legshotText);
 		damageMods.legshotRate = Number(legshotSlider.value) / 100.0;
 	}
-	
+
 	refresh_chart();
 }
 
 legshotSlider.oninput = function() {
 	update_slider_text(this, legshotText, '%');
 	damageMods.legshotRate = Number(this.value) / 100.0;
-	
+
 	if ((Number(headshotSlider.value) + Number(this.value)) > 100) {
 		headshotSlider.value = 100 - Number(this.value);
 		update_slider_text(headshotSlider, headshotText);
 		damageMods.headshotRate = Number(headshotSlider.value) / 100.0;
 	}
-	
+
 	refresh_chart();
 }
 
@@ -184,7 +185,7 @@ showShieldsCheckbox.oninput = function() {
 accuracySlider.oninput = function() {
 	update_slider_text(this, accuracyText, '%');
 	damageMods.hitRate = Number(this.value) / 100.0;
-	
+
 	refresh_chart();
 }
 
@@ -214,33 +215,42 @@ maxAccuracySlider.oninput = function() {
 	refresh_chart();
 }
 
+function ctrl_changed(ctrlState) {
+	ctrlIsDown = ctrlState;
+	refresh_weapon_buttons();
+}
+
+// This doesn't work when you hold both ctrl keys down and release one, but fuck that noise
+window.onkeyup = function(e)   { if(e.key == 'Control') { ctrl_changed(false); } }
+window.onkeydown = function(e) { if(e.key == 'Control') { ctrl_changed(true); } }
+
 function show_and_hide() {
 	shieldDiv.style.display = 'none'; showShieldsDiv.style.display = 'none';
 	secondsDiv.style.display = 'none'; accuracyDiv.style.display = 'none';
 	minAccuracyDiv.style.display = 'none'; maxAccuracyDiv.style.display = 'none';
-	
+
 	switch(chartMods.type) {
 		case ChartType.TIME_TO_KILL: {
 			shieldDiv.style.display = 'initial'; accuracyDiv.style.display = 'initial';
 		} break;
-		
+
 		case ChartType.TTK_OVER_ACCURACY: {
 			shieldDiv.style.display = 'initial';
 			minAccuracyDiv.style.display = 'initial'; maxAccuracyDiv.style.display = 'initial';
 		} break;
-		
+
 		case ChartType.DAMAGE_OVER_TIME: {
 			showShieldsDiv.style.display = 'initial'; secondsDiv.style.display = 'initial';
 			accuracyDiv.style.display = 'initial';
 		} break;
-		
+
 		case ChartType.DPS_INFINITE_MAG:
 		case ChartType.DPS_PRACTICAL:
 		case ChartType.DAMAGE_PER_MAG: {
 			accuracyDiv.style.display = 'initial';
 		} break;
 	}
-	
+
 	if(chartModsButton.classList.contains('foldOpen')) {
 		chartModsContentDiv.style.transition = '';
 		chartModsContentDiv.style.maxHeight = chartModsContentDiv.scrollHeight + 'px';
@@ -248,9 +258,9 @@ function show_and_hide() {
 }
 
 function folding() {
-	this.classList.toggle('foldOpen');	
+	this.classList.toggle('foldOpen');
 	let content = this.nextElementSibling;
-	
+
 	if (content.style.maxHeight) {
 		content.style.transition = 'max-height 0.2s linear, border-width 0s 0.2s';
 		content.style.maxHeight = null;
@@ -268,7 +278,7 @@ function page_setup() {
 	for (let foldBtnIndex = 0; foldBtnIndex < foldBtns.length; ++foldBtnIndex) {
 		foldBtns[foldBtnIndex].addEventListener('click', folding);
 	}
-	
+
 	update_slider_text(accuracySlider, accuracyText, '%');
 	update_slider_text(headshotSlider, headshotText, '%');
 	update_slider_text(legshotSlider,  legshotText, '%');
@@ -276,7 +286,7 @@ function page_setup() {
 	update_slider_text(secondsSlider,  secondsText);
 	update_slider_text(minAccuracySlider, minAccuracyText, '%');
 	update_slider_text(maxAccuracySlider, maxAccuracyText, '%');
-	
+
 	// Damage mods
 	let shield = get_shield_health(Number(shieldSelect.value));
 	let health = 100;
@@ -287,10 +297,10 @@ function page_setup() {
 	let fortified = fortifiedCheckbox.checked;
 	let amped = ampedCheckbox.checked;
 	let marked = markedCheckbox.checked;
-	
+
 	damageMods = new DamageModifiers(shield, health, hitRate, headshotRate, legshotRate, distance,
                                      fortified, amped, marked);
-	
+
 	// Global weapon mods
 	let magRarity = Number(globalMagSelect.value);
 	let stockRarity = Number(globalStockSelect.value);
@@ -299,13 +309,13 @@ function page_setup() {
 	let tacReload = globalTacReloadCheckbox.checked;
 	let ampReload = false;
 	let traits = 0;
-	
+
 	globalWeaponMods = new WeaponModifiers(magRarity, stockRarity, boltRarity, hopUp, tacReload,
                                            ampReload, traits, true);
-	
+
 	page_setup_charts();
 	page_setup_weapons();
-	
+
 	show_and_hide();
 }
 

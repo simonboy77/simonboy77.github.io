@@ -27,7 +27,7 @@ function get_rarity_name(rarity) {
 		case Rarity.LEGENDARY: { return 'Legendary'; } break;
 		case Rarity.MYTHIC:    { return 'Mythic'; } break;
 	}
-	
+
 	return 'Unavailable';
 }
 
@@ -40,7 +40,7 @@ function get_hop_up_name(hopUp) {
 		case HopUp.SELECTFIRE: { return 'Selectfire Receiver'; } break;
 		case HopUp.TURBO: { return 'Turbocharger'; } break;
 	}
-	
+
 	return 'None';
 }
 
@@ -58,23 +58,19 @@ const HopUp = {
 	SPLATTER:       0x08,
 	SELECTFIRE:     0x10,
 	TURBO:          0x20, // Unimplemented
-	
+
 	COUNT:			6, // increment this when adding new ones
 };
 
 const Trait = {
-	MODDED_LOADER:   0x01, // Unimplemented // LMG increase mag capacity and faster reload
-	FIRE_RATE_CHANGE: 0x02, // Unimplemented // nemesis & devotion
-	DAMAGE_CHANGE:    0x04, // Unimplemented // bocek & 30-30
+	MODDED_LOADER:   0x01, // LMG increase mag capacity and faster reload
 };
 
 /*
-
 specials:
 - reloading bullets one at a time (ask user if they want to fully reload or do 1-shoot-1-shoot)
 */
 
-// TODO: at what distance does the charge rifle start gaining damage?
 
 function get_shield_health(shieldRarity) {
 	switch (shieldRarity) {
@@ -83,10 +79,10 @@ function get_shield_health(shieldRarity) {
 		case Rarity.EPIC:
 		case Rarity.LEGENDARY: { return 100; } break;
 		case Rarity.MYTHIC:    { return 125; } break;
-		
+
 		default: break;
 	}
-	
+
 	return 0;
 }
 
@@ -105,7 +101,7 @@ class WeaponModifiers {
 		this.hopUp = hpUp;
 		this.tacReload = tac, this.ampReload = amp;
 		this.traits = tr;
-		
+
 		this.followGlobal = flw;
 	}
 }
@@ -123,7 +119,7 @@ class ChartModifiers {
 function byte_to_hex_string(byte) {
 	let hexString = byte.toString(16);
 	if(hexString.length == 1) { hexString = '0' + hexString; }
-	
+
 	return hexString;
 }
 
@@ -158,9 +154,9 @@ function hsl_to_hex_string(h, s, l) {
 function hex_color_from_index(index) {
 	let loopMult = 0.15; // loopin' around the color circle
 	let loopLoc = index * loopMult;
-	
+
 	let hue = (loopLoc) % 1.0;
 	let sat = 1.0 - ((Math.floor(loopLoc) * 0.2) % 1);
-	
+
 	return hsl_to_hex_string(hue, sat, 0.4);
 }

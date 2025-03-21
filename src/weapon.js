@@ -77,7 +77,7 @@ class Weapon {
 	}
 
 	get_fire_mode() { return this.fireModes[this.fireModeIndex]; }
-	get_fire_mode_count() {	return this.fireModes.length }
+	get_fire_mode_count() { return this.fireModes.length }
 	get_fire_mode_name(index) { return this.fireModes[index].name; }
 	get_fire_mode_index() { return this.fireModeIndex; }
 	set_fire_mode_index(index) { this.fireModeIndex = index; }
@@ -368,6 +368,46 @@ class Weapon {
 
 		let dps = damagePerMag / (fireTimePerMag + magDelay);
 		return dps;
+	}
+}
+
+class LSTAR extends Weapon {
+	constructor(name, fireModes, cpbAttachments, cpbHopUps, cpbTraits, misc) {
+		super(name, fireModes, cpbAttachments, cpbHopUps, cpbTraits, misc);
+		this.cooldownDelay = misc.cooldownDelay;
+		console.log(this.cooldownDelay);
+	}
+
+	get_reload_time(weaponMods) {
+		let reloadTime = this.get_fire_mode().reloadTac;
+		if(weaponMods.tacReload) {
+			let cooldownDelay = this.cooldownDelay;
+			switch(weaponMods.stockRarity) {
+				case Rarity.COMMON:    { cooldownDelay *= 0.967; } break; // -3.3%
+				case Rarity.RARE:      { cooldownDelay *= 0.933; } break; // -6.7%
+				case Rarity.EPIC:
+				case Rarity.LEGENDARY:
+				case Rarity.MYTHIC:    { cooldownDelay *= 0.9; } break; // -10%
+
+				default: break;
+			}
+
+			switch(weaponMods.magRarity) {
+				case Rarity.COMMON:    { reloadTime *= 0.967; } break; // -3.3%
+				case Rarity.RARE:      { reloadTime *= 0.933; } break; // -6.7%
+				case Rarity.EPIC:
+				case Rarity.LEGENDARY:
+				case Rarity.MYTHIC:    { reloadTime *= 0.9; } break; // -10%
+
+				default: break;
+			}
+
+			reloadTime += cooldownDelay;
+		} else {
+			reloadTime = super.get_reload_time(weaponMods);
+		}
+
+		return reloadTime;
 	}
 }
 

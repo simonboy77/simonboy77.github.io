@@ -17,18 +17,18 @@
 			<div class='activeWeaponMods' style='display:none;' id='awmDiv'>
 				<button class='displayHeader' id='awmHeader'>Weapon Modifications</button>
 				<div class='displayContent' id='awmContent'>
-					<div class='breakDiv'></div>					
-					
+					<div class='breakDiv'></div>
+
 					<div class='checkbox' style='width:75%;float:left;'>
 						<label for='input_followGlobal'>
 							<input type='checkbox' id='input_followGlobal'>
 							Follow Global
 						</label>
 					</div>
-					
+
 					<input type='image' class='trashBtn' id='input_delete' src='res/trash.svg'/>
 					<div style='clear:left;'></div>
-					
+
 					<div class='dropdown' id='awmMagDiv'>
 						<div class='breakDiv'></div>
 						<p class='elementTitle'>Magazine:</p>
@@ -61,7 +61,7 @@
 							<option value='3'>Epic</option>
 						</select>
 					</div>
-					
+
 					<div class='checkbox' id='awmTacReloadDiv'>
 						<div class='breakDiv'></div>
 						<label for='input_tacReload'>
@@ -69,21 +69,21 @@
 							Tactical Reload
 						</label>
 					</div>
-					
+
 					<div class='dropdown' id='awmFireModeDiv'>
 						<div class='breakDiv'></div>
 						<p class='elementTitle'>Fire Mode:</p>
 						<select class='dropdownValue' id='input_fireMode'>
 						</select>
 					</div>
-					
+
 					<div class='dropdown' id='awmHopUpDiv'>
 						<div class='breakDiv'></div>
 						<p class='elementTitle'>Hop-Up:</p>
 						<select class='dropdownValue' id='input_hopUp'>
 						</select>
 					</div>
-					
+
 					<div class='checkbox' id='awmModdedLoaderDiv'>
 						<div class='breakDiv'></div>
 						<label for='input_moddedLoader'>
@@ -91,11 +91,11 @@
 							Modded Loader
 						</label>
 					</div>
-					
+
 					<div class='breakDiv'></div>
 				</div>
 			</div>
-			
+
 			<div class='globalMods' id='globalModsDiv'>
 				<button class='foldBtn'>Global Weapon Modifications</button>
 				<div class='foldContent'>
@@ -137,10 +137,10 @@
 							Tactical Reload
 						</label>
 					</div>
-					
+
 					<div class='breakDiv'></div>
 				</div>
-				
+
 				<button class='foldBtn'>Damage Modifications</button>
 				<div class='foldContent'>
 					<div class='slider'>
@@ -154,13 +154,13 @@
 						<output class='sliderValue' id='legshotText'></output>
 						<input type='range' min='0' max='100' step='1' value='0' id='input_legshot'>
 					</div>
-					
+
 					<div class='slider'>
 						<p class='sliderTitle'>Target Distance:</p>
 						<output class='sliderValue' id='distanceText'></output>
 						<input type='range' min='0' max='300' step='1' value='0' id='input_distance'>
 					</div>
-					
+
 					<div class='breakDiv'></div>
 
 					<div class='checkbox'>
@@ -183,10 +183,10 @@
 							Vantage Mark
 						</label>
 					</div>
-					
+
 					<div class='breakDiv'></div>
 				</div>
-				
+
 				<button class='foldBtn' id='input_chartModsButton'>Graph Modifications</button>
 				<div class='foldContent' id='chartModsContentDiv'>
 					<div class='dropdown'>
@@ -207,7 +207,7 @@
 							<option value='5'>Mythic</option>
 						</select>
 					</div>
-					
+
 					<div class='checkbox' id='showShieldsDiv'>
 						<div class='breakDiv'></div>
 						<label for='input_showShields'>
@@ -215,7 +215,7 @@
 							Show Shields
 						</label>
 					</div>
-					
+
 					<div class='slider' id='secondsDiv'>
 						<p class='sliderTitle'>Seconds:</p>
 						<output class='sliderValue' id='secondsText'></output><br>
@@ -233,15 +233,17 @@
 						<output class='sliderValue' id='minAccuracyText'></output>
 						<input type='range' min='5' max='100' step='1' value='40' id='input_minAccuracy'>
 					</div>
-					
+
 					<div class='slider', id='maxAccuracyDiv'>
 						<p class='sliderTitle'>Maximum Accuracy:</p>
 						<output class='sliderValue' id='maxAccuracyText'></output>
 						<input type='range' min='5' max='100' step='1' value='100' id='input_maxAccuracy'>
 					</div>
-					
+
 					<div class='breakDiv'></div>
 				</div>
+
+				<button onclick='export_chart()'>Export Graph</button>
 			</div>
 		</div>
 	</div>
@@ -252,7 +254,7 @@
 				<div class='weaponSelectGrid' id='activeWeapons'>
 				</div>
 			</div>
-			
+
 			<div class='weaponSelect'>
 				<div class='weaponSelectGrid' id='weaponSelect'>
 				</div>

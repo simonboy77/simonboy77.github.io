@@ -49,7 +49,10 @@ const weapons_S24 = [
 	], Attachment.MAG | Attachment.STOCK, 0, 0, 0),
 
 	// Devotion
-	// L-STAR
+
+	new LSTAR('L-STAR', [
+		new FireMode('Normal', 19.0, 1.25, 0.85, 10.0, 22, 24, 26, 28, 3.26, 1.19, 24000, 0)
+	], Attachment.MAG | Attachment.STOCK, 0, Trait.MODDED_LOADER, {cooldownDelay:0.08}),
 
 	new Weapon('Spitfire', [
 		new FireMode('Normal', 21.0, 1.25, 0.85, 9.0, 35, 40, 45, 50, 4.0, 3.1, 27500, 0)

@@ -6,7 +6,7 @@ function refresh_chart_time_to_kill() {
 	let weaponData = gen_time_to_kill_data();
 	let shieldRarity = Number(shieldSelect.value);
 	let accuracy = Number(accuracySlider.value);
-	
+
 	sort_bar_data(weaponData);
 	chart_update_time_to_kill(chart, weaponData, chartMods, shieldRarity, accuracy);
 }
@@ -14,7 +14,7 @@ function refresh_chart_time_to_kill() {
 function refresh_chart_ttk_over_accuracy() {
 	let weaponDatasets = gen_ttk_over_accuracy_data();
 	let shieldRarity = Number(shieldSelect.value);
-	
+
 	chart_update_ttk_over_accuracy(chart, weaponDatasets, chartMods, shieldRarity);
 }
 
@@ -25,21 +25,21 @@ function refresh_chart_damage_over_time() {
 
 function refresh_chart_dps_infinite_mag() {
 	let weaponData = gen_dps_infinite_mag_data();
-	
+
 	sort_bar_data(weaponData);
 	chart_update_dps_infinite_mag(chart, weaponData, chartMods);
 }
 
 function refresh_chart_dps_practical() {
 	let weaponData = gen_dps_practical_data();
-	
+
 	sort_bar_data(weaponData);
 	chart_update_dps_practical(chart, weaponData, chartMods);
 }
 
 function refresh_chart_damage_per_mag() {
 	let weaponData = gen_damage_per_mag_data();
-	
+
 	sort_bar_data(weaponData);
 	chart_update_damage_per_mag(chart, weaponData, chartMods, globalWeaponMods.magRarity);
 }
@@ -70,7 +70,7 @@ function page_setup_charts() {
 		chartEntry.text = get_chart_title(chartIndex);
 		chartSelect.add(chartEntry);
 	}
-	
+
 	// Chart mods
 	let canvasId = 'statChart';
 	let chartType = Number(chartSelect.value);
@@ -78,9 +78,18 @@ function page_setup_charts() {
 	let showShields = showShieldsCheckbox.checked;
 	let minAccuracy = Number(minAccuracySlider.value);
 	let maxAccuracy = Number(maxAccuracySlider.value);
-	
+
 	chartMods = new ChartModifiers(canvasId, chartType, seconds, showShields, minAccuracy, maxAccuracy);
-	
+
 	chart = chart_create(chartMods);
 	refresh_chart();
+}
+
+function export_chart() {
+	let a  = document.createElement('a');
+	a.href = chart.toBase64Image();
+	a.download = 'apex_graph.png';
+
+	a.click();
+	a.remove();
 }
